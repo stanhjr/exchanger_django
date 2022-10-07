@@ -30,3 +30,20 @@ class Feedback(models.Model):
         verbose_name = 'Feedback'
         verbose_name_plural = 'Feedback'
 
+
+class Action(models.Model):
+    title = models.CharField(max_length=200)
+    text = models.TextField()
+    image = models.ImageField(null=True, upload_to="actions_images/")
+
+    @property
+    def image_url(self):
+        if self.image:
+            return f"{HOST}{self.image.url}"
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = 'Action'
+        verbose_name_plural = 'Action'
