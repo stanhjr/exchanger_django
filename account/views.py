@@ -1,12 +1,9 @@
-from rest_framework import permissions, viewsets, status, serializers
-from rest_framework.decorators import action
+from rest_framework import permissions, viewsets, status
 from rest_framework.generics import CreateAPIView
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from account.models import CustomUser
-from account.serializers import SignUpSerializer
+from account.serializers import SignUpSerializer, GetUserSerializer
 
 
 class SignUpApi(CreateAPIView):
@@ -17,6 +14,16 @@ class SignUpApi(CreateAPIView):
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         return Response({'message': 'Sign up access',
-                         'username': response.data.get('username')},
+                         'email': response.data.get('email')},
                         status=status.HTTP_201_CREATED)
 
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = GetUserSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def list(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)

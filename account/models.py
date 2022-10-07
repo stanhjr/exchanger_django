@@ -1,10 +1,12 @@
 import uuid
 from decimal import Decimal
+from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from datetime import datetime
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 from exchanger_django.settings import HOST
 
@@ -12,6 +14,7 @@ from exchanger_django.settings import HOST
 class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(blank=True, unique=True)
+    inviter_token = models.CharField(max_length=150, null=True, blank=True)
     last_action = models.DateTimeField(default=datetime.now())
     is_confirmed = models.BooleanField(default=False)
     cents = models.BigIntegerField(default=0)
@@ -22,32 +25,28 @@ class CustomUser(AbstractUser):
 
     @property
     def referral_url(self):
-        return f"{HOST}/?referral={self.id}"
+        return f"{HOST}/{self.id}"
 
     @classmethod
     def get_inviter(cls, referral_token=None):
         return cls.objects.filter(id=referral_token).first()
 
+    def save(self, *args, **kwargs) -> None:
+        self.username = self.email
+        return super().save(*args, **kwargs)
+
 
 class ReferralRelationship(models.Model):
-    # who invite
     inviter = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name='inviter',
         verbose_name="inviter",
         on_delete=models.CASCADE,
     )
-    # who connected
     invited = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name='invited',
         verbose_name="invited",
-        on_delete=models.CASCADE,
-    )
-    # referral code
-    refer_token = models.ForeignKey(
-        "ReferralCode",
-        verbose_name="referral_code",
         on_delete=models.CASCADE,
     )
 
@@ -55,11 +54,10 @@ class ReferralRelationship(models.Model):
         return f"{self.inviter}_{self.invited}"
 
 
-class ReferralCode(models.Model):
-    token = models.CharField(unique=True, max_length=150)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, verbose_name="code_master", on_delete=models.CASCADE
-    )
-
-    def __str__(self) -> str:
-        return f"{self.user}_{self.token}"
+@receiver(post_save, sender=CustomUser)
+def post_save_function(sender, instance, **kwargs):
+    inviter = CustomUser.objects.filter(id=instance.inviter_token).first()
+    if inviter:
+        referral = ReferralRelationship.objects.create(inviter=inviter,
+                                                       invited=instance)
+        referral.save()

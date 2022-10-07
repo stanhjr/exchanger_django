@@ -6,7 +6,7 @@ from account.models import CustomUser
 class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['password', 'email']
+        fields = ['password', 'email', 'inviter_token']
 
     def save(self, **kwargs):
         if len(self.validated_data["password"]) < 8:
@@ -15,3 +15,9 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"email": "this email is busy"})
         self.validated_data["password"] = make_password(self.validated_data["password"])
         return super().save()
+
+
+class GetUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['email', 'referral_url', 'wallet']

@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from account.models import CustomUser
+from account.models import ReferralRelationship
+
+admin.site.register(CustomUser)
+admin.site.register(ReferralRelationship)
+
