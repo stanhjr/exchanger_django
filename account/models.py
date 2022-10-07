@@ -22,7 +22,7 @@ class CustomUser(AbstractUser):
 
     @property
     def referral_url(self):
-        return f"{HOST}?referral={self.id}"
+        return f"{HOST}/?referral={self.id}"
 
     @classmethod
     def get_inviter(cls, referral_token=None):

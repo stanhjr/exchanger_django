@@ -37,11 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-
     'rest_framework_simplejwt',
     'drf_yasg',
     'account',
     'blog',
+    'important_info',
 ]
 
 MIDDLEWARE = [
@@ -136,6 +136,9 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 50
 }
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
@@ -187,7 +190,7 @@ SWAGGER_SETTINGS = {
     ],
 }
 APPEND_SLASH = False
-HOST = "http://127.0.0.1:8000/"
+HOST = "http://127.0.0.1:8000"
 
 try:
     from .local_settings import *

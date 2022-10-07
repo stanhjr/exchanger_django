@@ -9,6 +9,9 @@ __pycache__/
 # Distribution / packaging
 .idea
 test.py
+media/logo_images/*.jpeg
+media/logo_images/*.jpg
+media/logo_images/*.png
 .Python
 build/
 develop-eggs/
