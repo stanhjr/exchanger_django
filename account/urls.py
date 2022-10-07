@@ -7,7 +7,6 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from account.views import SignUpApi
 
 router = DefaultRouter()
-# router.register(r'posts', PostViewSet, basename='posts')
 
 urlpatterns = router.urls
 urlpatterns += [

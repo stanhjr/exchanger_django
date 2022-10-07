@@ -37,9 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'account',
+
     'rest_framework_simplejwt',
     'drf_yasg',
+    'account',
+    'blog',
 ]
 
 MIDDLEWARE = [
@@ -184,7 +186,6 @@ SWAGGER_SETTINGS = {
         'patch'
     ],
 }
-
 APPEND_SLASH = False
 HOST = "http://127.0.0.1:8000/"
 

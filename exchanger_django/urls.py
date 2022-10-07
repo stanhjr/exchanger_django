@@ -22,5 +22,6 @@ from .yasg import url_patterns as doc_urls
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('account.urls')),
+    path('', include('blog.urls'))
 ]
 urlpatterns += doc_urls
