@@ -30,3 +30,9 @@ class PostList(generics.ListAPIView):
             tags = hash_tags.split(",")
             return Post.objects.filter(tags__name__in=tags).distinct()
         return Post.objects.all()
+
+
+class PostDetail(generics.RetrieveAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    lookup_field = 'slug'
