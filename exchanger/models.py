@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -30,6 +31,12 @@ class ExchangeRates(models.Model):
 
     def get_calculate(self, price_left: int):
         result = Decimal(price_left) * (self.value_left / self.value_right)
-        return result.quantize(Decimal("1.00"))
+        return result.quantize(Decimal("1.0000"))
+
+    def clean(self):
+        if self.value_right <= 0 or self.value_left <=0:
+            raise ValidationError(
+                'value cannot be equal to or less than zero')
+
 
 
