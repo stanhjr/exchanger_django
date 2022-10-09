@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from exchanger.views import ExchangeList
 from exchanger.views import ExchangeCalculate
+from exchanger.views import TransactionsView
 
 
 router = DefaultRouter()
@@ -10,5 +11,6 @@ router = DefaultRouter()
 urlpatterns = router.urls
 urlpatterns += [
     path('exchanger/', ExchangeList.as_view(), name='exchanger_list'),
-    path('exchanger_pre_calculate/', ExchangeCalculate.as_view(), name='get_pre_calculate')
+    path('exchanger_pre_calculate/', ExchangeCalculate.as_view(), name='get_pre_calculate'),
+    path('transaction_create/', TransactionsView.as_view(), name='transaction_create')
 ]

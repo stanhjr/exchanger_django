@@ -7,3 +7,4 @@ pairs_id = openapi.Parameter('pairs_id', openapi.IN_QUERY,
 price = openapi.Parameter('price', openapi.IN_QUERY,
                           description="required field for get exchange calculate",
                           type=openapi.TYPE_NUMBER)
+

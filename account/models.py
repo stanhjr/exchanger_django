@@ -1,13 +1,14 @@
 import uuid
 from decimal import Decimal
-from datetime import datetime
 
-from django.conf import settings
+
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from django.conf import settings
 from exchanger_django.settings import HOST
 
 
@@ -15,7 +16,7 @@ class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(blank=True, unique=True)
     inviter_token = models.CharField(max_length=150, null=True, blank=True)
-    last_action = models.DateTimeField(default=datetime.now())
+    last_action = models.DateTimeField(default=timezone.now)
     is_confirmed = models.BooleanField(default=False)
     cents = models.BigIntegerField(default=0)
 

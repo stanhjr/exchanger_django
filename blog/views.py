@@ -14,6 +14,7 @@ class PostList(generics.ListAPIView):
     @method_decorator(swagger_auto_schema(manual_parameters=[schema.post_tags]))
     def get(self, request, *args, **kwargs):
         """
+        Returned posts list
 
         Takes tag or tags (optional) and returned posts containing these tags
 
