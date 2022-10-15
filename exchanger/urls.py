@@ -10,7 +10,7 @@ router = DefaultRouter()
 
 urlpatterns = router.urls
 urlpatterns += [
-    path('exchanger/', ExchangeList.as_view(), name='exchanger_list'),
-    path('exchanger_pre_calculate/', ExchangeCalculate.as_view(), name='get_pre_calculate'),
+    path('', ExchangeList.as_view(), name='exchanger_list'),
+    path('pre_calculate/', ExchangeCalculate.as_view(), name='get_pre_calculate'),
     path('transaction_create/', TransactionsView.as_view(), name='transaction_create')
 ]

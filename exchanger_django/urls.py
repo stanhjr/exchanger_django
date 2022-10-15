@@ -23,10 +23,10 @@ from .yasg import url_patterns as doc_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('account.urls')),
-    path('', include('blog.urls')),
-    path('', include('important_info.urls')),
-    path('', include('exchanger.urls'))
+    path('account/', include('account.urls')),
+    path('blog/', include('blog.urls')),
+    path('important_info/', include('important_info.urls')),
+    path('exchanger/', include('exchanger.urls'))
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += doc_urls

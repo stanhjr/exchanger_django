@@ -14,6 +14,7 @@ class SignUpSerializer(serializers.ModelSerializer):
         if CustomUser.objects.filter(email=self.validated_data["email"]).first():
             raise serializers.ValidationError({"email": "this email is busy"})
         self.validated_data["password"] = make_password(self.validated_data["password"])
+
         return super().save()
 
 
