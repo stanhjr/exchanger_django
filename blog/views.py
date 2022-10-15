@@ -19,8 +19,8 @@ class PostList(generics.ListAPIView):
         Takes tag or tags (optional) and returned posts containing these tags
 
         Tags format example:
-        1. yourtag
-        2. onetag,twotag
+        1. some_tag
+        2. some_tag,some_tag2
 
         """
         return super().get(request, *args, **kwargs)
