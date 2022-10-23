@@ -43,6 +43,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return self.request.user
 
     def list(self, request, *args, **kwargs):
+        self.request.user.set_level()
         return self.retrieve(request, *args, **kwargs)
 
 

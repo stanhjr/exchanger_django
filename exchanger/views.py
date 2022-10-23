@@ -55,7 +55,6 @@ class TransactionsView(generics.CreateAPIView):
                                        amount_exchange=serializer.data.get("amount_exchange"),
                                        )
             transaction.save(pairs_id=serializer.data.get("pairs_id"))
-            # response = super().create(request, *args, **kwargs)
             response_serializer = TransactionsSerializerResponse(transaction)
             return Response({'message': 'transaction create', **response_serializer.data},
                             status=status.HTTP_201_CREATED)

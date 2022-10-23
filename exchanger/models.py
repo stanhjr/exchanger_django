@@ -32,7 +32,7 @@ class ExchangeRates(models.Model):
         return f"{self.currency_left} -> {self.currency_right}"
 
     def get_calculate(self, price_left: int):
-        result = Decimal(price_left) * (self.value_left / self.value_right)
+        result = Decimal(price_left) * (self.value_left * self.value_right)
         return result.quantize(Decimal("1.0000"))
 
     def clean(self):
@@ -54,6 +54,8 @@ class Transactions(models.Model):
                                           max_digits=60, decimal_places=30)
 
     created_at = models.DateTimeField(default=timezone.now)
+    is_confirm = models.BooleanField(default=False)
+    reference_dollars = models.DecimalField(null=True, blank=True,  max_digits=60, decimal_places=30)
 
     class Meta:
         verbose_name = 'Transactions'
@@ -75,4 +77,63 @@ class Transactions(models.Model):
         self.currency_exchange = exchange_pair.currency_left
         self.currency_received = exchange_pair.currency_right
         self.amount_received = exchange_pair.get_calculate(self.amount_exchange)
+
+        currency_usdt = Currency.objects.filter(name='USDT').first()
+        if not currency_usdt:
+            raise ValidationError
+
+        exchange_pair = ExchangeRates.objects.filter(currency_left=exchange_pair.currency_left,
+                                                     currency_right=currency_usdt).first()
+        self.reference_dollars = exchange_pair.get_calculate(self.amount_exchange)
+        if not self.user:
+            return super().save(*args, **kwargs)
+
+        self.amount_received = self.amount_received - self.user.get_percent_profit_price(self.amount_received)
+        # TODO APPROVE
+        self.is_confirm = True
+        inviter = CustomUser.get_inviter(self.user)
+        if self.is_confirm and inviter:
+            inviter.set_level()
+            ...
+
         return super().save(*args, **kwargs)
+
+
+class ProfitTotal(models.Model):
+    total_usdt = models.IntegerField()
+    profit_percent = models.DecimalField(max_digits=4, decimal_places=2)
+
+    class Meta:
+        ordering = ('total_usdt', )
+
+    def __str__(self) -> str:
+        return f"price {self.total_usdt}$ -> profit percent {self.profit_percent} %"
+
+
+class ProfitModel(models.Model):
+    level = models.IntegerField(default=1)
+    price_dollars = models.IntegerField()
+    profit_percent = models.DecimalField(max_digits=4, decimal_places=2)
+
+    @classmethod
+    def __get_profit_percent(cls, price_dollars: Decimal) -> Decimal:
+        model = cls.objects.filter(price_dollars__lte=price_dollars).first()
+        if model:
+            return model.profit_percent
+
+    @classmethod
+    def get_discount(cls, price: Decimal, currency: str):
+        if currency != 'USDT':
+            price_model = ExchangeRates.objects.filter(currency_left=currency, currency_right='USD').first()
+            if not price_model:
+                return
+            price = price_model.get_calculate(price)
+        else:
+            price = price
+        return cls.__get_profit_percent(price)
+
+    def __str__(self) -> str:
+        return f"price {self.price_dollars}$ -> profit percent {self.profit_percent} %"
+
+    class Meta:
+        ordering = ('price_dollars', )
