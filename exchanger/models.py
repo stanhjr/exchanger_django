@@ -79,19 +79,31 @@ class Transactions(models.Model):
         self.amount_received = exchange_pair.get_calculate(self.amount_exchange)
 
         currency_usdt = Currency.objects.filter(name='USDT').first()
-        if not currency_usdt:
+        currency_uah = Currency.objects.filter(name__icontains='UAH').first()
+        if not currency_usdt or not currency_uah:
             raise ValidationError
 
-        exchange_pair = ExchangeRates.objects.filter(currency_left=exchange_pair.currency_left,
+        currency_left = None
+        value_uah = 0
+        if self.currency_exchange == currency_uah:
+            currency_left = exchange_pair.currency_left
+            value_uah = self.amount_exchange
+        if self.currency_received == currency_uah:
+            currency_left = exchange_pair.currency_right
+            value_uah = self.amount_received
+        if currency_left is None:
+            raise ValidationError
+
+        exchange_pair = ExchangeRates.objects.filter(currency_left=currency_left,
                                                      currency_right=currency_usdt).first()
-        self.reference_dollars = exchange_pair.get_calculate(self.amount_exchange)
+        self.reference_dollars = exchange_pair.get_calculate(value_uah)
         if not self.user:
             return super().save(*args, **kwargs)
 
         self.amount_received = self.amount_received - self.user.get_percent_profit_price(self.amount_received)
         # TODO APPROVE
         self.is_confirm = True
-        inviter = CustomUser.get_inviter(self.user)
+        inviter = CustomUser.get_inviter(self.user.inviter_token)
         if self.is_confirm and inviter:
             inviter.set_level()
             ...

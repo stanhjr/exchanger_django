@@ -35,7 +35,7 @@ class CustomUser(AbstractUser):
         Level_4 = 4
         Level_5 = 5
 
-    level = models.IntegerField(choices=RefLevel.choices, blank=True, null=True)
+    level = models.IntegerField(choices=RefLevel.choices, blank=True, null=True, default=1)
 
     @property
     def wallet(self):
@@ -73,6 +73,8 @@ class CustomUser(AbstractUser):
     def set_level(self):
         from exchanger.models import ProfitModel
         sum_dollars_refers_per_month = self._get_sum_dollars_refers_per_month(self)
+        if sum_dollars_refers_per_month is None:
+            return
         profit_model = ProfitModel.objects.filter(price_dollars__lte=sum_dollars_refers_per_month,
                                                   level__gt=self.level).first()
 
@@ -83,7 +85,7 @@ class CustomUser(AbstractUser):
 
     def get_percent_profit_price(self, price) -> Decimal:
         from exchanger.models import ProfitModel, ProfitTotal
-        percent_total = ProfitTotal.objects.filter(total_usdt__lte=price)
+        percent_total = ProfitTotal.objects.filter(total_usdt__lte=price).first()
         profit_model = ProfitModel.objects.filter(level=self.level).first()
         if profit_model and percent_total:
             result = price * profit_model.profit_percent * percent_total.profit_percent
