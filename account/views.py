@@ -2,6 +2,7 @@ from django.shortcuts import redirect
 from django.views.generic import RedirectView
 from rest_framework import permissions, viewsets, status
 from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from account.models import CustomUser
@@ -38,6 +39,7 @@ class SignUpApi(CreateAPIView):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = GetUserSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
         return self.request.user
