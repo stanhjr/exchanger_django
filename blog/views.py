@@ -4,7 +4,14 @@ from rest_framework import generics
 
 from blog import schema
 from blog.models import Post
+from blog.models import Tag
 from blog.serializers import PostSerializer
+from blog.serializers import TagSerializer
+
+
+class TagList(generics.ListAPIView):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
 
 
 class PostList(generics.ListAPIView):

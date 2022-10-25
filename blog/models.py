@@ -16,6 +16,8 @@ class Post(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     slug = models.SlugField(unique=True, max_length=100, blank=True)
     tags = models.ManyToManyField(Tag, related_name='posts')
+    minutes_for_reading = models.IntegerField(default=1)
+    image = models.ImageField(upload_to='myphoto/%Y/%m/%d/', null=True, max_length=255)
 
     class Meta:
         ordering = ['created']
