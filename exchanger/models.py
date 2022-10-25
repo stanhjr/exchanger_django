@@ -100,7 +100,7 @@ class Transactions(models.Model):
         if not self.user:
             return super().save(*args, **kwargs)
 
-        self.amount_received = self.amount_received - self.user.get_percent_profit_price(self.amount_received)
+        self.currency_exchange = self.currency_exchange - self.user.get_percent_profit_price(self.currency_exchange)
         # TODO APPROVE
         self.is_confirm = True
         inviter = CustomUser.get_inviter(self.user.inviter_token)
