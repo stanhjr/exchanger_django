@@ -1,20 +1,24 @@
 from django.db import models
-
+from parler.models import TranslatedFields, TranslatableModel
 from exchanger_django.settings import HOST
 
 
-class Faq(models.Model):
-    question = models.CharField(max_length=90)
-    answer = models.TextField(max_length=1000)
+class Faq(TranslatableModel):
+    translations = TranslatedFields(
+        question=models.CharField(max_length=90),
+        answer=models.TextField(max_length=1000)
+    )
 
     class Meta:
         verbose_name = 'Faq settings'
         verbose_name_plural = 'Faq settings'
-        ordering = ['question', ]
 
 
-class Feedback(models.Model):
-    name = models.CharField(max_length=200)
+class Feedback(TranslatableModel):
+    translations = TranslatedFields(
+        name=models.CharField(max_length=200),
+    )
+
     logo_image = models.ImageField(null=True, upload_to="logo_images/")
     link = models.CharField(max_length=200)
 
@@ -31,9 +35,12 @@ class Feedback(models.Model):
         verbose_name_plural = 'Feedback'
 
 
-class Action(models.Model):
-    title = models.CharField(max_length=200)
-    text = models.TextField()
+class Action(TranslatableModel):
+    translations = TranslatedFields(
+        title=models.CharField(max_length=200),
+        text=models.TextField()
+    )
+
     image = models.ImageField(null=True, upload_to="actions_images/")
 
     @property

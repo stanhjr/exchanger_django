@@ -1,18 +1,23 @@
+from parler_rest.fields import TranslatedFieldsField
 from rest_framework import serializers
 
+from blog.mixins import TranslatedSerializerMixin
 from blog.models import Post
 from blog.models import Tag
 
 
-class TagSerializer(serializers.ModelSerializer):
+class TagSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
+    translations = TranslatedFieldsField(shared_model=Tag)
+
     class Meta:
         model = Tag
-        fields = ['name', ]
+        fields = ['translations', ]
 
 
-class PostSerializer(serializers.ModelSerializer):
+class PostSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
     tags = TagSerializer(many=True)
+    translations = TranslatedFieldsField(shared_model=Post)
 
     class Meta:
         model = Post
-        fields = ['slug', 'title', 'text', 'created', 'tags', 'minutes_for_reading', 'image']
+        fields = ['slug', 'translations', 'created', 'tags', 'minutes_for_reading', 'image']

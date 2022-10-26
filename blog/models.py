@@ -1,23 +1,28 @@
 from django.db import models
 from django.utils import timezone as tz
+from django.utils.translation import gettext as _
+from parler.models import TranslatedFields, TranslatableModel
 from slugify import slugify
+from parler.utils.context import switch_language
 
 
-class Tag(models.Model):
-    name = models.CharField(max_length=255)
+class Tag(TranslatableModel):
+    translations = TranslatedFields(name=models.CharField(max_length=255), )
 
     def __str__(self):
         return self.name
 
 
-class Post(models.Model):
-    title = models.CharField(max_length=200)
-    text = models.TextField()
+class Post(TranslatableModel):
+    translations = TranslatedFields(
+        title=models.CharField(_("Title"), max_length=200, unique=True),
+        text=models.TextField(_("Content"), blank=True)
+    )
     created = models.DateTimeField(auto_now_add=True)
     slug = models.SlugField(unique=True, max_length=100, blank=True)
     tags = models.ManyToManyField(Tag, related_name='posts')
     minutes_for_reading = models.IntegerField(default=1)
-    image = models.ImageField(upload_to='myphoto/%Y/%m/%d/', null=True, max_length=255)
+    image = models.ImageField(upload_to='posts_images/%Y/%m/%d/', null=True, max_length=255)
 
     class Meta:
         ordering = ['created']
@@ -28,5 +33,6 @@ class Post(models.Model):
     def save(self, *args, **kwargs) -> None:
         if Post.objects.filter(pk=self.pk):
             self.updated_at = tz.now()
-        self.slug = slugify(self.title)
+        with switch_language(self, 'en'):
+            self.slug = slugify(self.title)
         return super().save(*args, **kwargs)

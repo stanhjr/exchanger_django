@@ -47,3 +47,6 @@ urllib3==1.26.8
 vine==5.0.0
 wcwidth==0.2.5
 wrapt==1.14.1
+
+django-parler~=2.3
+django-parler-rest~=2.2

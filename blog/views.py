@@ -1,3 +1,6 @@
+from functools import reduce
+from operator import or_
+
 from django.db.models import Q
 from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
@@ -37,7 +40,8 @@ class PostList(generics.ListAPIView):
         hash_tags = self.request.query_params.get("tags")
         if hash_tags:
             tags = hash_tags.split(",")
-            return Post.objects.filter(tags__name__in=tags).distinct()
+            q_object = reduce(or_, (Q(tags__translations__name__icontains=tag) for tag in tags))
+            return Post.objects.filter(q_object).distinct()
         return Post.objects.all()
 
 
@@ -57,9 +61,7 @@ class PostListSearch(generics.ListAPIView):
     def get_queryset(self):
         search = self.request.query_params.get("search")
         if search:
-            q1 = Q(title__icontains=search)
-            q2 = Q(text__icontains=search)
-            return Post.objects.filter(q1 | q2).distinct()
+            return Post.objects.filter(translations__icontains=search).distinct()
         return Post.objects.all()
 
 

@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'parler',
     'drf_yasg',
     'corsheaders',
     'account',
@@ -64,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'blog.middleware.AdminLocaleMiddleware',
 ]
 
 ROOT_URLCONF = 'exchanger_django.urls'
@@ -160,6 +162,18 @@ REST_FRAMEWORK = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+PARLER_LANGUAGES = {
+    None: (
+        {'code': 'en', },
+        {'code': 'uk', },
+        {'code': 'ru', },
+    ),
+    'default': {
+        'fallbacks': ['en'],
+        'hide_untranslated': False,  # Default
+    }
+}
+ADMIN_LANGUAGE_CODE = 'en'
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=5),
