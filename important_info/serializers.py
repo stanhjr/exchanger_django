@@ -1,24 +1,31 @@
+from parler_rest.fields import TranslatedFieldsField
 from rest_framework import serializers
 
+from blog.mixins import TranslatedSerializerMixin
 from important_info.models import Faq
 from important_info.models import Feedback
 from important_info.models import Action
 
 
-class FaqSerializer(serializers.ModelSerializer):
+class FaqSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
+    translations = TranslatedFieldsField(shared_model=Faq)
+
     class Meta:
         model = Faq
-        fields = ['question', 'answer']
+        fields = ['translations', ]
 
 
-class FeedbackSerializer(serializers.ModelSerializer):
+class FeedbackSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
+    translations = TranslatedFieldsField(shared_model=Feedback)
+
     class Meta:
         model = Feedback
-        fields = ['link', 'image_url']
+        fields = ['translations', 'link', 'logo_image']
 
 
-class ActionSerializer(serializers.ModelSerializer):
+class ActionSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
+    translations = TranslatedFieldsField(shared_model=Action)
+
     class Meta:
-        model = Feedback
-        fields = ['link', 'image_url']
-
+        model = Action
+        fields = ['translations', 'image']
