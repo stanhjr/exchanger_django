@@ -24,6 +24,14 @@ class ExchangeRates(models.Model):
     currency_right = models.ForeignKey(Currency, related_name='exchange_right', on_delete=models.CASCADE)
     value_left = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30)
     value_right = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30)
+    min_value = models.DecimalField(default=1000.00, validators=[MinValueValidator(0), ],
+                                    max_digits=60, decimal_places=30)
+    max_value = models.DecimalField(default=1000.00, validators=[MinValueValidator(0), ],
+                                    max_digits=60, decimal_places=30)
+    service_commission = models.DecimalField(default=0.005, validators=[MinValueValidator(0), ],
+                                             max_digits=5, decimal_places=4)
+    blockchain_commission = models.DecimalField(default=0.001, validators=[MinValueValidator(0), ],
+                                                max_digits=5, decimal_places=4)
 
     class Meta:
         verbose_name = 'Exchange Rates'
@@ -32,9 +40,19 @@ class ExchangeRates(models.Model):
     def __str__(self):
         return f"{self.currency_left} -> {self.currency_right}"
 
-    def get_calculate(self, price_left: int):
-        result = Decimal(price_left) * (self.value_left * self.value_right)
+    def get_calculate(self, price_left: Decimal):
+        value_without_commission = Decimal(price_left) * (self.value_left * self.value_right)
+        service_commission = value_without_commission * self.service_commission
+        blockchain_commission = value_without_commission * self.blockchain_commission
+        result = value_without_commission - service_commission - blockchain_commission
         return result.quantize(Decimal("1.0000"))
+
+    def get_info_calculate(self, price_left: Decimal):
+        service_commission = Decimal(price_left) * self.service_commission
+        blockchain_commission = Decimal(price_left) * self.blockchain_commission
+        return {"value": self.get_calculate(price_left),
+                "service_commission": service_commission,
+                "blockchain_commission": blockchain_commission}
 
     def clean(self):
         if self.value_right <= 0 or self.value_left <= 0:
@@ -56,7 +74,7 @@ class Transactions(models.Model):
 
     created_at = models.DateTimeField(default=timezone.now)
     is_confirm = models.BooleanField(default=False)
-    reference_dollars = models.DecimalField(null=True, blank=True,  max_digits=60, decimal_places=30)
+    reference_dollars = models.DecimalField(null=True, blank=True, max_digits=60, decimal_places=30)
 
     class Meta:
         verbose_name = 'Transactions'
@@ -117,7 +135,10 @@ class ProfitTotal(models.Model):
     profit_percent = models.DecimalField(max_digits=4, decimal_places=2)
 
     class Meta:
-        ordering = ('total_usdt', )
+        ordering = ('total_usdt',)
+
+    def get_coef(self):
+        return self.profit_percent / 100
 
     def __str__(self) -> str:
         return f"price {self.total_usdt}$ -> profit percent {self.profit_percent} %"
@@ -149,4 +170,4 @@ class ProfitModel(models.Model):
         return f"price {self.price_dollars}$ -> profit percent {self.profit_percent} %"
 
     class Meta:
-        ordering = ('price_dollars', )
+        ordering = ('price_dollars',)

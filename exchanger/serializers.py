@@ -17,8 +17,7 @@ class ExchangeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ExchangeRates
-        fields = ['id', 'value_left', 'value_right', 'currency_left', 'currency_right']
-        # related_object = 'question'
+        fields = ['id', 'value_left', 'value_right', 'currency_left', 'currency_right', 'min_value', 'max_value']
 
 
 class ExchangeIdSerializer(serializers.ModelSerializer):
