@@ -8,7 +8,7 @@ from account.models import CustomUser
 class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['password', 'email', 'inviter_token', 'login']
+        fields = ['password', 'email', 'inviter_token', 'username']
 
     def save(self, **kwargs):
         if len(self.validated_data["password"]) < 8:
@@ -25,16 +25,17 @@ class SignUpSerializer(serializers.ModelSerializer):
 class GetUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['email', 'login', 'referral_url', 'wallet', 'level', 'sum_refers_eq_usdt']
+        fields = ['email', 'username', 'referral_url', 'wallet', 'level', 'sum_refers_eq_usdt']
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super(CustomTokenObtainPairSerializer, self).validate(attrs)
-        data.update({'login': self.user.login})
-        data.update({'email': self.user.email})
-        data.update({'referral_url': self.user.referral_url})
-        data.update({'wallet': self.user.wallet})
-        data.update({'level': self.user.level})
-        data.update({'sum_refers_eq_usdt': self.user.sum_refers_eq_usdt})
+        data.update({'user': GetUserSerializer(instance=self.user).data})
+        # data.update({'login': self.user.login})
+        # data.update({'email': self.user.email})
+        # data.update({'referral_url': self.user.referral_url})
+        # data.update({'wallet': self.user.wallet})
+        # data.update({'level': self.user.level})
+        # data.update({'sum_refers_eq_usdt': self.user.sum_refers_eq_usdt})
         return data

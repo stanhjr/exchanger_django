@@ -21,7 +21,6 @@ from exchanger_django.settings import HOST
 class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(blank=True, unique=True)
-    login = models.CharField(max_length=50, unique=True)
     inviter_token = models.CharField(max_length=150, null=True, blank=True)
     last_action = models.DateTimeField(default=timezone.now)
     is_confirmed = models.BooleanField(default=False)
@@ -93,10 +92,6 @@ class CustomUser(AbstractUser):
             return Decimal(result)
         return Decimal(price * 0)
 
-    def save(self, *args, **kwargs):
-        if not self.username:
-            self.username = self.email
-        return super().save(*args, **kwargs)
 
 
 class ReferralRelationship(models.Model):

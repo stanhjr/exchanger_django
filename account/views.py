@@ -27,9 +27,8 @@ class SignUpApi(CreateAPIView):
             serializer.verify_code = code
             user = CustomUser.objects.create_user(
                 email=serializer.validated_data['email'],
-                username=serializer.validated_data['email'],
+                username=serializer.validated_data['username'],
                 password=serializer.validated_data['password'],
-                login=serializer.validated_data['login'],
             )
             send_registration_link_to_email.delay(email_to=serializer.validated_data.get("email"),
                                                   code=code,
