@@ -4,9 +4,10 @@ from rest_framework import permissions, viewsets, status
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from account.models import CustomUser
-from account.serializers import SignUpSerializer, GetUserSerializer
+from account.serializers import SignUpSerializer, GetUserSerializer, CustomTokenObtainPairSerializer
 
 from celery_tasks.tasks import generate_key
 from celery_tasks.tasks import send_reset_password_link_to_email
@@ -18,16 +19,6 @@ class SignUpApi(CreateAPIView):
     permission_classes = [permissions.AllowAny]
     queryset = CustomUser.objects.all()
     serializer_class = SignUpSerializer
-
-    # def perform_create(self, serializer):
-    #     code = generate_key()
-    #     serializer.verify_code = code
-    #     send_registration_link_to_email.delay(email_to=serializer.validated_data.get("email"),
-    #                                           code=code,
-    #                                           subject="Email Verify Code")
-    #     serializer = serializer.save()
-    #     serializer.verify_code = code
-    #     return serializer.save()
 
     def create(self, request, *args, **kwargs):
         code = generate_key()
@@ -93,3 +84,9 @@ class SignUpConfirm(RedirectView):
             return redirect(HOST)
         else:
             return redirect(HOST)
+
+
+class LoginView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+

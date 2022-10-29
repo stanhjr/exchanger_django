@@ -1,5 +1,7 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 from account.models import CustomUser
 
 
@@ -24,3 +26,15 @@ class GetUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'login', 'referral_url', 'wallet', 'level', 'sum_refers_eq_usdt']
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super(CustomTokenObtainPairSerializer, self).validate(attrs)
+        data.update({'login': self.user.login})
+        data.update({'email': self.user.email})
+        data.update({'referral_url': self.user.referral_url})
+        data.update({'wallet': self.user.wallet})
+        data.update({'level': self.user.level})
+        data.update({'sum_refers_eq_usdt': self.user.sum_refers_eq_usdt})
+        return data
