@@ -6,19 +6,28 @@ from exchanger import schema
 
 from exchanger.models import ExchangeRates
 from exchanger.models import Transactions
+from exchanger.models import Currency
+
 from exchanger.serializers import CalculateSerializer
 from exchanger.serializers import TransactionsSerializerResponse
 from exchanger.serializers import ExchangeSerializer
 from exchanger.serializers import TransactionsSerializer
+from exchanger.serializers import CurrencySerializer
 
 
-class ExchangeList(generics.ListAPIView):
+class CurrencyListView(generics.ListAPIView):
+    pagination_class = None
+    queryset = Currency.objects.all()
+    serializer_class = CurrencySerializer
+
+
+class ExchangeListView(generics.ListAPIView):
     pagination_class = None
     queryset = ExchangeRates.objects.all()
     serializer_class = ExchangeSerializer
 
 
-class ExchangeCalculate(views.APIView):
+class ExchangeCalculateView(views.APIView):
 
     @swagger_auto_schema(manual_parameters=[schema.pairs_id, schema.price])
     def get(self, request):
