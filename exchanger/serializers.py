@@ -8,7 +8,7 @@ from exchanger.models import Currency
 class CurrencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Currency
-        fields = ['__all__']
+        fields = '__all__'
 
 
 class ExchangeSerializer(serializers.ModelSerializer):
