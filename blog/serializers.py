@@ -14,10 +14,19 @@ class TagSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
         fields = ['translations', ]
 
 
+class SubPostSerializer(serializers.ModelSerializer):
+    translations = TranslatedFieldsField(shared_model=Post)
+    class Meta:
+        model = Post
+        fields = ('slug', 'translations', 'created', 'minutes_for_reading', 'image')
+
+
 class PostSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
     tags = TagSerializer(many=True)
+    recommendation = SubPostSerializer(many=True)
     translations = TranslatedFieldsField(shared_model=Post)
 
     class Meta:
         model = Post
-        fields = ['slug', 'translations', 'created', 'tags', 'minutes_for_reading', 'image', 'next_slug', 'previous_slug']
+        fields = ['slug', 'translations', 'created', 'tags', 'minutes_for_reading',
+                  'image', 'next_slug', 'previous_slug', 'recommendation']

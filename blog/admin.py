@@ -17,7 +17,7 @@ class PostAdmin(TranslatableAdmin):
     list_display = ('title', 'text')
     fieldsets = (
         (None, {
-            'fields': ('title', 'text', 'slug', 'tags', 'minutes_for_reading', 'image'),
+            'fields': ('title', 'text', 'slug', 'tags', 'minutes_for_reading', 'image', 'recommendation'),
         }),
     )
 

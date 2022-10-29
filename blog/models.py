@@ -23,6 +23,7 @@ class Post(TranslatableModel):
     tags = models.ManyToManyField(Tag, related_name='posts')
     minutes_for_reading = models.IntegerField(default=1)
     image = models.ImageField(upload_to='posts_images/%Y/%m/%d/', null=True, max_length=255)
+    recommendation = models.ManyToManyField('self', related_name='post_recommendation', null=True, blank=True)
 
     class Meta:
         ordering = ['created']
