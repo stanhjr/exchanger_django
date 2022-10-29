@@ -14,6 +14,8 @@ from celery_tasks.tasks import send_reset_password_link_to_email
 from celery_tasks.tasks import send_registration_link_to_email
 from exchanger_django.settings import HOST
 
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+
 
 class SignUpApi(CreateAPIView):
     permission_classes = [permissions.AllowAny]
@@ -29,11 +31,18 @@ class SignUpApi(CreateAPIView):
                 email=serializer.validated_data['email'],
                 username=serializer.validated_data['username'],
                 password=serializer.validated_data['password'],
+                verify_code=code,
             )
             send_registration_link_to_email.delay(email_to=serializer.validated_data.get("email"),
                                                   code=code,
                                                   subject="Email Verify Code")
-            return Response({"user": GetUserSerializer(instance=user).data}, status=status.HTTP_201_CREATED)
+            refresh_token = RefreshToken.for_user(user)
+            access_token = AccessToken.for_user(user)
+            response = {"user": GetUserSerializer(instance=user).data}
+            response.update(access_token=str(access_token))
+            response.update(refresh_token=str(refresh_token))
+            return Response(response, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

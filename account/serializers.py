@@ -25,7 +25,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 class GetUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['email', 'username', 'referral_url', 'wallet', 'level', 'sum_refers_eq_usdt']
+        fields = ['email', 'username', 'referral_url', 'wallet', 'level', 'sum_refers_eq_usdt', 'is_confirmed']
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
