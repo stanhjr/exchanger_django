@@ -32,10 +32,4 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super(CustomTokenObtainPairSerializer, self).validate(attrs)
         data.update({'user': GetUserSerializer(instance=self.user).data})
-        # data.update({'login': self.user.login})
-        # data.update({'email': self.user.email})
-        # data.update({'referral_url': self.user.referral_url})
-        # data.update({'wallet': self.user.wallet})
-        # data.update({'level': self.user.level})
-        # data.update({'sum_refers_eq_usdt': self.user.sum_refers_eq_usdt})
         return data

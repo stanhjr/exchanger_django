@@ -33,7 +33,7 @@ class SignUpApi(CreateAPIView):
             send_registration_link_to_email.delay(email_to=serializer.validated_data.get("email"),
                                                   code=code,
                                                   subject="Email Verify Code")
-            return Response(GetUserSerializer(instance=user).data, status=status.HTTP_201_CREATED)
+            return Response({"user": GetUserSerializer(instance=user).data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
