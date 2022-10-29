@@ -39,6 +39,8 @@ class ExchangeCalculateView(views.APIView):
             pairs_model = ExchangeRates.objects.filter(id=serializer.data.get("pairs_id")).first()
             if not pairs_model:
                 return Response({'detail': 'not found pairs'}, status=404)
+            if not pairs_model.get_price_validation(price_left=serializer.data.get("price")):
+                return Response({"message": "value is greater or less than allowed values"}, status=400)
             return Response({'value': pairs_model.get_info_calculate(serializer.data.get("price"))}, status=200)
 
         return Response({'detail': 'not params'}, status=404)
