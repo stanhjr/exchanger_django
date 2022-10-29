@@ -20,4 +20,4 @@ class PostSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['slug', 'translations', 'created', 'tags', 'minutes_for_reading', 'image']
+        fields = ['slug', 'translations', 'created', 'tags', 'minutes_for_reading', 'image', 'next_slug', 'previous_slug']

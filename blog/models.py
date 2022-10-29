@@ -27,6 +27,18 @@ class Post(TranslatableModel):
     class Meta:
         ordering = ['created']
 
+    @property
+    def next_slug(self):
+        next_ogj = Post.objects.filter(pk__gt=self.pk).order_by('pk').first()
+        if next_ogj:
+            return next_ogj.slug
+
+    @property
+    def previous_slug(self):
+        next_ogj = Post.objects.filter(pk__lt=self.pk).order_by('pk').first()
+        if next_ogj:
+            return next_ogj.slug
+
     def __str__(self):
         return self.title
 
