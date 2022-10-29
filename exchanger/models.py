@@ -9,6 +9,7 @@ from account.models import CustomUser
 
 class Currency(models.Model):
     name = models.CharField(max_length=100)
+    image_icon = models.ImageField(upload_to='currency_images/%Y/%m/%d/', null=True, max_length=255)
 
     class Meta:
         verbose_name = 'Currency'

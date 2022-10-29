@@ -12,12 +12,13 @@ class CurrencySerializer(serializers.ModelSerializer):
 
 
 class ExchangeSerializer(serializers.ModelSerializer):
-    currency_left = serializers.StringRelatedField()
-    currency_right = serializers.StringRelatedField()
+    currency_left = CurrencySerializer()
+    currency_right = CurrencySerializer()
 
     class Meta:
         model = ExchangeRates
         fields = ['id', 'value_left', 'value_right', 'currency_left', 'currency_right']
+        # related_object = 'question'
 
 
 class ExchangeIdSerializer(serializers.ModelSerializer):
