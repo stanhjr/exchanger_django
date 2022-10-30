@@ -1,13 +1,18 @@
+from decimal import Decimal
+
 from django.shortcuts import redirect
 from django.views.generic import RedirectView
-from rest_framework import permissions, viewsets, status
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import permissions, viewsets, status, views
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from account.models import CustomUser
-from account.serializers import SignUpSerializer, GetUserSerializer, CustomTokenObtainPairSerializer
+from account import schema
+from account.serializers import SignUpSerializer, GetUserSerializer, CustomTokenObtainPairSerializer, \
+    UserBonusCalculateSerializer
 
 from celery_tasks.tasks import generate_key
 from celery_tasks.tasks import send_reset_password_link_to_email
@@ -98,3 +103,24 @@ class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 
+class UserBonusPreCalculateView(views.APIView):
+
+    @swagger_auto_schema(manual_parameters=[schema.referral_number, schema.price])
+    def get(self, request):
+        """
+        Takes required query params and returned pre calculate bonus value
+        """
+        serializer = UserBonusCalculateSerializer(data=self.request.query_params)
+        if serializer.is_valid():
+            from exchanger.models import ProfitModel, ProfitTotal
+            price = serializer.data.get("referral_number") * serializer.data.get("price")
+            percent_total = ProfitTotal.objects.filter(total_usdt__lte=price).first()
+            profit_model = ProfitModel.objects.filter(price_dollars=price).first()
+            if profit_model and percent_total:
+                result = price * profit_model.profit_percent_coef * percent_total.profit_percent
+                result = Decimal(result)
+            else:
+                result = Decimal(price * 0)
+            return Response({'value': result}, status=200)
+
+        return Response({'detail': 'not params'}, status=404)

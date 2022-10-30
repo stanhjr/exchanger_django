@@ -93,9 +93,18 @@ class Transactions(models.Model):
         else:
             return f'AnonymousUser | {self.currency_exchange} -> {self.currency_received} | {self.amount_exchange}'
 
-    def save(self, pairs_id=None, *args, **kwargs):
+    def save(self, pairs_id=None, is_confirm=True, *args, **kwargs):
+        if is_confirm:
+            inviter = CustomUser.get_inviter(self.user.inviter_token)
+            if self.is_confirm and inviter:
+                inviter.wallet += self.user.get_percent_profit_price(self.currency_exchange)
+                inviter.set_level(commit=False)
+                inviter.save()
+                return super().save(*args, **kwargs)
+
         if not pairs_id:
             return super().save(*args, **kwargs)
+
         exchange_pair = ExchangeRates.objects.filter(id=pairs_id).first()
         if not exchange_pair:
             return super().save(*args, **kwargs)
@@ -127,11 +136,6 @@ class Transactions(models.Model):
 
         self.currency_exchange = self.currency_exchange - self.user.get_percent_profit_price(self.currency_exchange)
         # TODO APPROVE
-        self.is_confirm = True
-        inviter = CustomUser.get_inviter(self.user.inviter_token)
-        if self.is_confirm and inviter:
-            inviter.set_level()
-            ...
 
         return super().save(*args, **kwargs)
 
@@ -154,6 +158,10 @@ class ProfitModel(models.Model):
     level = models.IntegerField(default=1)
     price_dollars = models.IntegerField()
     profit_percent = models.DecimalField(max_digits=4, decimal_places=2)
+
+    @property
+    def profit_percent_coef(self):
+        return self.profit_percent / 100
 
     @classmethod
     def __get_profit_percent(cls, price_dollars: Decimal) -> Decimal:

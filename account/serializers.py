@@ -33,3 +33,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super(CustomTokenObtainPairSerializer, self).validate(attrs)
         data.update({'user': GetUserSerializer(instance=self.user).data})
         return data
+
+
+class UserBonusCalculateSerializer(serializers.Serializer):
+    referral_number = serializers.IntegerField(required=True)
+    price = serializers.IntegerField(required=True)

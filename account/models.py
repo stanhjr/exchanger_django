@@ -14,7 +14,6 @@ from django.db import transaction
 
 from django.conf import settings
 
-
 from exchanger_django.settings import HOST
 
 
@@ -70,7 +69,7 @@ class CustomUser(AbstractUser):
         if profit_model:
             return profit_model.profit_percent / 100
 
-    def set_level(self):
+    def set_level(self, commit=True):
         from exchanger.models import ProfitModel
         sum_dollars_refers_per_month = self._get_sum_dollars_refers_per_month(self)
         if sum_dollars_refers_per_month is None:
@@ -80,7 +79,8 @@ class CustomUser(AbstractUser):
 
         if profit_model:
             self.level = profit_model.level
-            self.save()
+            if commit:
+                self.save()
             return self.level
 
     def get_percent_profit_price(self, price) -> Decimal:
@@ -88,10 +88,9 @@ class CustomUser(AbstractUser):
         percent_total = ProfitTotal.objects.filter(total_usdt__lte=price).first()
         profit_model = ProfitModel.objects.filter(level=self.level).first()
         if profit_model and percent_total:
-            result = price * profit_model.profit_percent * percent_total.profit_percent
+            result = price * profit_model.profit_percent_coef * percent_total.profit_percent
             return Decimal(result)
         return Decimal(price * 0)
-
 
 
 class ReferralRelationship(models.Model):
