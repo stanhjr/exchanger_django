@@ -24,9 +24,9 @@ class ExchangeRates(models.Model):
     currency_right = models.ForeignKey(Currency, related_name='exchange_right', on_delete=models.CASCADE)
     value_left = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30)
     value_right = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30)
-    min_value = models.DecimalField(default=10000.00, validators=[MinValueValidator(0), ],
+    min_value = models.DecimalField(default=1000.00, validators=[MinValueValidator(0), ],
                                     max_digits=60, decimal_places=30)
-    max_value = models.DecimalField(default=10000.00, validators=[MinValueValidator(0), ],
+    max_value = models.DecimalField(default=100000.00, validators=[MinValueValidator(0), ],
                                     max_digits=60, decimal_places=30)
     service_commission = models.DecimalField(default=0.005, validators=[MinValueValidator(0), ],
                                              max_digits=5, decimal_places=4)
@@ -43,8 +43,9 @@ class ExchangeRates(models.Model):
     def get_price_validation(self, price_left: Decimal):
         if price_left < self.min_value:
             return False
-        if price_left > self.get_calculate(price_left):
+        if price_left > self.max_value:
             return False
+        return True
 
     def get_calculate(self, price_left: Decimal):
         value_without_commission = Decimal(price_left) * (self.value_left * self.value_right)
