@@ -28,4 +28,4 @@ class ActionSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Action
-        fields = ['translations', 'image']
+        fields = ['translations', 'image', 'created_at', 'new']

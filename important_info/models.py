@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 from parler.models import TranslatedFields, TranslatableModel
 from exchanger_django.settings import HOST
@@ -40,6 +42,8 @@ class Action(TranslatableModel):
         title=models.CharField(max_length=200),
         text=models.TextField()
     )
+    created_at = models.DateField(auto_now_add=True)
+    new = models.BooleanField(default=True)
 
     image = models.ImageField(null=True, upload_to="actions_images/")
 
