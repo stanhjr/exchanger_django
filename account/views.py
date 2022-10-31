@@ -115,7 +115,7 @@ class UserBonusPreCalculateView(views.APIView):
             from exchanger.models import ProfitModel, ProfitTotal
             price = serializer.data.get("referral_number") * serializer.data.get("price")
             percent_total = ProfitTotal.objects.filter(total_usdt__lte=price).first()
-            profit_model = ProfitModel.objects.filter(price_dollars=price).first()
+            profit_model = ProfitModel.objects.filter(price_dollars__lte=price).first()
             if profit_model and percent_total:
                 result = price * profit_model.profit_percent_coef * percent_total.profit_percent
                 result = Decimal(result)
