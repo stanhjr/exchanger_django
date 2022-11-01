@@ -14,8 +14,9 @@ class TagSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
         fields = ['translations', ]
 
 
-class SubPostSerializer(serializers.ModelSerializer):
+class SubPostSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
     translations = TranslatedFieldsField(shared_model=Post)
+
     class Meta:
         model = Post
         fields = ('slug', 'translations', 'created', 'minutes_for_reading', 'image')
