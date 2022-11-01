@@ -16,7 +16,7 @@ class Faq(TranslatableModel):
         verbose_name_plural = 'Faq settings'
 
 
-class Feedback(TranslatableModel):
+class FeedbackMonitoring(TranslatableModel):
     translations = TranslatedFields(
         name=models.CharField(max_length=200),
     )
@@ -33,8 +33,29 @@ class Feedback(TranslatableModel):
         return self.name
 
     class Meta:
-        verbose_name = 'Feedback'
-        verbose_name_plural = 'Feedback'
+        verbose_name = 'FeedbackMonitoring'
+        verbose_name_plural = 'FeedbackMonitoring'
+
+
+class FeedbackSites(TranslatableModel):
+    translations = TranslatedFields(
+        name=models.CharField(max_length=200),
+    )
+
+    logo_image = models.ImageField(null=True, upload_to="logo_images/")
+    link = models.CharField(max_length=200)
+
+    @property
+    def image_url(self):
+        if self.logo_image:
+            return f"{HOST}{self.logo_image.url}"
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'FeedbackSites'
+        verbose_name_plural = 'FeedbackSites'
 
 
 class Action(TranslatableModel):

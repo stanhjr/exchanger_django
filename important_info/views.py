@@ -2,9 +2,11 @@ from rest_framework import generics
 
 from important_info.models import Faq
 from important_info.models import Action
-from important_info.models import Feedback
+from important_info.models import FeedbackMonitoring
+from important_info.models import FeedbackSites
 from important_info.serializers import FaqSerializer
-from important_info.serializers import FeedbackSerializer
+from important_info.serializers import FeedbackSitesSerializer
+from important_info.serializers import FeedbackMonitoringSerializer
 from important_info.serializers import ActionSerializer
 
 
@@ -13,9 +15,14 @@ class FaqList(generics.ListAPIView):
     serializer_class = FaqSerializer
 
 
-class FeedbackList(generics.ListAPIView):
-    queryset = Feedback.objects.all()
-    serializer_class = FeedbackSerializer
+class FeedbackMonitoringList(generics.ListAPIView):
+    queryset = FeedbackMonitoring.objects.all()
+    serializer_class = FeedbackMonitoringSerializer
+
+
+class FeedbackSitesList(generics.ListAPIView):
+    queryset = FeedbackSites.objects.all()
+    serializer_class = FeedbackSitesSerializer
 
 
 class ActionList(generics.ListAPIView):

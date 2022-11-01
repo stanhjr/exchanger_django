@@ -2,7 +2,8 @@ from django.contrib import admin
 from parler.admin import TranslatableAdmin
 
 from important_info.models import Action
-from important_info.models import Feedback
+from important_info.models import FeedbackMonitoring
+from important_info.models import FeedbackSites
 from important_info.models import Faq
 
 
@@ -35,4 +36,5 @@ class FaqAdmin(TranslatableAdmin):
 
 admin.site.register(Action, ActionAdmin)
 admin.site.register(Faq, FaqAdmin)
-admin.site.register(Feedback, FeedbackAdmin)
+admin.site.register(FeedbackMonitoring, FeedbackAdmin)
+admin.site.register(FeedbackSites, FeedbackAdmin)

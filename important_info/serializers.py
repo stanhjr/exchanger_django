@@ -3,7 +3,8 @@ from rest_framework import serializers
 
 from blog.mixins import TranslatedSerializerMixin
 from important_info.models import Faq
-from important_info.models import Feedback
+from important_info.models import FeedbackMonitoring
+from important_info.models import FeedbackSites
 from important_info.models import Action
 
 
@@ -15,11 +16,19 @@ class FaqSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
         fields = ['translations', ]
 
 
-class FeedbackSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
-    translations = TranslatedFieldsField(shared_model=Feedback)
+class FeedbackSitesSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
+    translations = TranslatedFieldsField(shared_model=FeedbackSites)
 
     class Meta:
-        model = Feedback
+        model = FeedbackMonitoring
+        fields = ['translations', 'link', 'logo_image']
+
+
+class FeedbackMonitoringSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
+    translations = TranslatedFieldsField(shared_model=FeedbackMonitoring)
+
+    class Meta:
+        model = FeedbackMonitoring
         fields = ['translations', 'link', 'logo_image']
 
 
