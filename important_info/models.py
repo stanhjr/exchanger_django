@@ -79,3 +79,20 @@ class Action(TranslatableModel):
     class Meta:
         verbose_name = 'Action'
         verbose_name_plural = 'Action'
+
+
+class GetInTouchModel(models.Model):
+    email = models.EmailField()
+    title = models.CharField(max_length=100)
+    text = models.TextField(max_length=1024)
+    telegram = models.CharField(max_length=100)
+    created_at = models.DateField(auto_now_add=True)
+    viewed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.email
+
+    class Meta:
+        verbose_name = 'GetInTouch'
+        verbose_name_plural = 'GetInTouch'
+        ordering = ['-created_at', 'viewed']

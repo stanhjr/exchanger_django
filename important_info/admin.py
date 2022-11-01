@@ -5,6 +5,7 @@ from important_info.models import Action
 from important_info.models import FeedbackMonitoring
 from important_info.models import FeedbackSites
 from important_info.models import Faq
+from important_info.models import GetInTouchModel
 
 
 class ActionAdmin(TranslatableAdmin):
@@ -34,7 +35,12 @@ class FaqAdmin(TranslatableAdmin):
     )
 
 
+class GetInTouchAdmin(admin.ModelAdmin):
+    list_display = ('email', 'viewed', 'created_at')
+
+
 admin.site.register(Action, ActionAdmin)
 admin.site.register(Faq, FaqAdmin)
 admin.site.register(FeedbackMonitoring, FeedbackAdmin)
 admin.site.register(FeedbackSites, FeedbackAdmin)
+admin.site.register(GetInTouchModel, GetInTouchAdmin)
