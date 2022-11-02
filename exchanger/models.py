@@ -88,6 +88,21 @@ class Transactions(models.Model):
         verbose_name_plural = 'Transaction'
         ordering = ['created_at']
 
+    @property
+    def transaction_date(self):
+        return self.created_at
+
+    @property
+    def user_email(self):
+        return self.user.email
+
+    @property
+    def inviter_earned_by_transaction(self):
+        inviter = self.user.get_inviter(self.user.inviter_token)
+        if not inviter:
+            return 0
+        return inviter.get_percent_profit_price(self.reference_dollars)
+
     def __str__(self):
         if self.user:
             return f'{self.user.email} | {self.currency_exchange} -> {self.currency_received} | {self.amount_exchange}'

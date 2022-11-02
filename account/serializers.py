@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from account.models import CustomUser
+from exchanger.models import Transactions
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -47,3 +48,10 @@ class UserAnalyticsSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['counts_of_referral', 'available_for_payment',
                   'paid_from_referral', 'total_sum_from_referral', 'referral_url']
+
+
+class UserReferralOperationsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Transactions
+        fields = ['transaction_date', 'user_email', 'inviter_earned_by_transaction']

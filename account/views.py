@@ -17,12 +17,13 @@ from account.serializers import (
     GetUserSerializer,
     CustomTokenObtainPairSerializer,
     UserBonusCalculateSerializer,
-    UserAnalyticsSerializer
+    UserAnalyticsSerializer, UserReferralOperationsSerializer
 )
 
 from celery_tasks.tasks import generate_key
 from celery_tasks.tasks import send_reset_password_link_to_email
 from celery_tasks.tasks import send_registration_link_to_email
+from exchanger.models import Transactions
 from exchanger_django.settings import HOST
 
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
@@ -132,7 +133,7 @@ class UserBonusPreCalculateView(views.APIView):
         return Response({'detail': 'not params'}, status=404)
 
 
-class UserAnalyticsView(viewsets.ModelViewSet):
+class UserRefAnalyticsView(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserAnalyticsSerializer
     permission_classes = [IsAuthenticated]
@@ -143,3 +144,15 @@ class UserAnalyticsView(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         self.request.user.set_level()
         return self.retrieve(request, *args, **kwargs)
+
+
+class UserReferralOperationsView(viewsets.ModelViewSet):
+    queryset = Transactions.objects.all().select_related('user')
+    serializer_class = UserReferralOperationsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+    def get_queryset(self):
+        return Transactions.objects.filter(user__inviter_token=self.request.user.pk).all().select_related('user')
