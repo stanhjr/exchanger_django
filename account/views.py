@@ -11,8 +11,14 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from account.models import CustomUser
 from account import schema
-from account.serializers import SignUpSerializer, GetUserSerializer, CustomTokenObtainPairSerializer, \
-    UserBonusCalculateSerializer
+
+from account.serializers import (
+    SignUpSerializer,
+    GetUserSerializer,
+    CustomTokenObtainPairSerializer,
+    UserBonusCalculateSerializer,
+    UserAnalyticsSerializer
+)
 
 from celery_tasks.tasks import generate_key
 from celery_tasks.tasks import send_reset_password_link_to_email
@@ -124,3 +130,16 @@ class UserBonusPreCalculateView(views.APIView):
             return Response({'value': result}, status=200)
 
         return Response({'detail': 'not params'}, status=404)
+
+
+class UserAnalyticsView(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = UserAnalyticsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+    def list(self, request, *args, **kwargs):
+        self.request.user.set_level()
+        return self.retrieve(request, *args, **kwargs)

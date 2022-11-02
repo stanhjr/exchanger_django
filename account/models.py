@@ -2,9 +2,9 @@ import datetime
 import uuid
 from decimal import Decimal
 
-
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db.models import Sum
 from django.utils import timezone
 from django.db import models
@@ -24,6 +24,8 @@ class CustomUser(AbstractUser):
     last_action = models.DateTimeField(default=timezone.now)
     is_confirmed = models.BooleanField(default=False)
     cents = models.BigIntegerField(default=0)
+    paid_from_referral = models.DecimalField(default=0.00, validators=[MinValueValidator(0), ],
+                                             max_digits=60, decimal_places=2)
     verify_code = models.CharField(default='', max_length=100, null=True, blank=True)
     reset_password_code = models.CharField(default='', max_length=100, null=True, blank=True)
 
@@ -51,13 +53,29 @@ class CustomUser(AbstractUser):
     @classmethod
     def _get_sum_dollars_refers_per_month(cls, user) -> int:
         month_number = datetime.datetime.now().strftime("%m")
-        invited_users = cls.objects.filter(inviter_token=user.pk).all().\
-            prefetch_related('transactions').\
+        invited_users = cls.objects.filter(inviter_token=user.pk).all(). \
+            prefetch_related('transactions'). \
             filter(transactions__is_confirm=True,
                    transactions__created_at__month=month_number). \
             aggregate(Sum('transactions__reference_dollars'))
 
-        return invited_users.get('transactions__reference_dollars__sum', 0)
+        if not invited_users.get('transactions__reference_dollars__sum'):
+            return 0
+        return invited_users.get('transactions__reference_dollars__sum')
+
+    @property
+    def counts_of_referral(self):
+        return CustomUser.objects.filter(inviter_token=self.pk).count()
+
+    @property
+    def total_sum_from_referral(self):
+        invited_users = CustomUser.objects.filter(inviter_token=self.pk).all().\
+            prefetch_related('transactions').filter(transactions__is_confirm=True).\
+            aggregate(Sum('transactions__reference_dollars'))
+
+        if not invited_users.get('transactions__reference_dollars__sum'):
+            return 0
+        return invited_users.get('transactions__reference_dollars__sum')
 
     @property
     def sum_refers_eq_usdt(self) -> int:
@@ -125,6 +143,3 @@ def post_save_function(sender, instance, **kwargs):
                 referral.save()
     except ValidationError as e:
         print(e)
-
-
-

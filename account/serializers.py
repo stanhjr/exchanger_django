@@ -38,3 +38,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class UserBonusCalculateSerializer(serializers.Serializer):
     referral_number = serializers.IntegerField(required=True)
     price = serializers.IntegerField(required=True)
+
+
+class UserAnalyticsSerializer(serializers.ModelSerializer):
+    available_for_payment = serializers.CharField(source='wallet')
+
+    class Meta:
+        model = CustomUser
+        fields = ['counts_of_referral', 'available_for_payment',
+                  'paid_from_referral', 'total_sum_from_referral', 'referral_url']

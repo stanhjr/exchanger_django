@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from account.views import SignUpApi
+from account.views import UserAnalyticsView
 from account.views import UserViewSet
 from account.views import ResetPassword
 from account.views import SignUpConfirm
@@ -20,5 +21,6 @@ urlpatterns += [
     path('user_info/', UserViewSet.as_view({'get': 'list'}), name='user_info'),
     path('account-activate/', SignUpConfirm.as_view(), name='account-activate'),
     path('reset-password/', ResetPassword.as_view(), name='reset-password'),
-    path('get-bonus-calculate/', UserBonusPreCalculateView.as_view(), name='get-bonus_calculate')
+    path('get-bonus-calculate/', UserBonusPreCalculateView.as_view(), name='get-bonus_calculate'),
+    path('referral-statistics/', UserAnalyticsView.as_view({'get': 'list'}), name='referral-statistics'),
 ]
