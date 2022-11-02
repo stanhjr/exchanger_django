@@ -70,7 +70,7 @@ class GetTwoFactorCode(CreateAPIView):
             serializer.verify_code = code
             user = CustomUser.objects.filter(email=serializer.validated_data['email']).first()
             if not user:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': 'not user'}, status=400)
             user.two_factor_auth_code = code
             user.save()
             send_verify_code_to_email.delay(email_to=serializer.validated_data.get("email"),
@@ -78,6 +78,7 @@ class GetTwoFactorCode(CreateAPIView):
                                             subject="Email Verify Code")
 
             return Response(status=status.HTTP_200_OK)
+        return Response({'detail': 'not valid email'}, status=404)
 
 
 class UserViewSet(viewsets.ModelViewSet):
