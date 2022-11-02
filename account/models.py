@@ -19,6 +19,8 @@ from exchanger_django.settings import HOST
 
 class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    two_factor_auth = models.BooleanField(default=False)
+    two_factor_auth_code = models.CharField(default='', max_length=100, null=True, blank=True)
     email = models.EmailField(blank=True, unique=True)
     inviter_token = models.CharField(max_length=150, null=True, blank=True)
     last_action = models.DateTimeField(default=timezone.now)

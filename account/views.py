@@ -17,10 +17,10 @@ from account.serializers import (
     GetUserSerializer,
     CustomTokenObtainPairSerializer,
     UserBonusCalculateSerializer,
-    UserAnalyticsSerializer, UserReferralOperationsSerializer
+    UserAnalyticsSerializer, UserReferralOperationsSerializer, UserTwoFactorSerializer
 )
 
-from celery_tasks.tasks import generate_key
+from celery_tasks.tasks import generate_key, send_verify_code_to_email
 from celery_tasks.tasks import send_reset_password_link_to_email
 from celery_tasks.tasks import send_registration_link_to_email
 from exchanger.models import Transactions
@@ -56,6 +56,28 @@ class SignUpApi(CreateAPIView):
             return Response(response, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetTwoFactorCode(CreateAPIView):
+    permission_classes = [permissions.AllowAny]
+    queryset = CustomUser.objects.all()
+    serializer_class = UserTwoFactorSerializer
+
+    def create(self, request, *args, **kwargs):
+        code = generate_key()
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.verify_code = code
+            user = CustomUser.objects.filter(email=serializer.validated_data['email']).first()
+            if not user:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            user.two_factor_auth_code = code
+            user.save()
+            send_verify_code_to_email.delay(email_to=serializer.validated_data.get("email"),
+                                            code=code,
+                                            subject="Email Verify Code")
+
+            return Response(status=status.HTTP_200_OK)
 
 
 class UserViewSet(viewsets.ModelViewSet):

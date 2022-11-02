@@ -10,6 +10,9 @@ config = {
         'celery_tasks.tasks.send_reset_password_link_to_email': {
             'queue': 'celery_tasks'
         },
+        'celery_tasks.tasks.send_verify_code_to_email': {
+            'queue': 'celery_tasks'
+        },
 
     },
     'accept_content': ['json', 'application/x-python-serialize'],

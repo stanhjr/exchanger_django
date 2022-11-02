@@ -1,6 +1,8 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.utils.translation import gettext_lazy as _
 
 from account.models import CustomUser
 from exchanger.models import Transactions
@@ -30,7 +32,32 @@ class GetUserSerializer(serializers.ModelSerializer):
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    default_error_messages = {
+        'not_two_factor_auth_code': _('not or not valid two_factor_auth_code'),
+
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['two_factor_auth_code'] = serializers.CharField(required=False)
+
     def validate(self, attrs):
+
+        username = attrs.get('username')
+        user = CustomUser.objects.filter(username=username).first()
+        if not user:
+            raise AuthenticationFailed(
+                self.error_messages['no_active_account'],
+                'no_active_account',
+            )
+        if user.two_factor_auth and user.two_factor_auth_code != attrs.get('two_factor_auth_code'):
+            raise AuthenticationFailed(
+                self.error_messages['not_two_factor_auth_code'],
+                'not_two_factor_auth_code',
+            )
+        user.two_factor_auth_code = ''
+        user.save()
         data = super(CustomTokenObtainPairSerializer, self).validate(attrs)
         data.update({'user': GetUserSerializer(instance=self.user).data})
         return data
@@ -51,7 +78,13 @@ class UserAnalyticsSerializer(serializers.ModelSerializer):
 
 
 class UserReferralOperationsSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Transactions
         fields = ['transaction_date', 'user_email', 'inviter_earned_by_transaction']
+
+
+class UserTwoFactorSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CustomUser
+        fields = ['email', ]
