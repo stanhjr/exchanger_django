@@ -4,7 +4,7 @@ from django.shortcuts import redirect
 from django.views.generic import RedirectView
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, viewsets, status, views
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -17,10 +17,11 @@ from account.serializers import (
     GetUserSerializer,
     CustomTokenObtainPairSerializer,
     UserBonusCalculateSerializer,
-    UserAnalyticsSerializer, UserReferralOperationsSerializer, UserTwoFactorSerializer
+    UserAnalyticsSerializer, UserReferralOperationsSerializer, UserTwoFactorSerializer, LoginWithCodeSerializer,
+    ChangePasswordSerializer
 )
 
-from celery_tasks.tasks import generate_key, send_verify_code_to_email
+from celery_tasks.tasks import generate_key, send_verify_code_to_email, send_reset_password_code_to_email
 from celery_tasks.tasks import send_reset_password_link_to_email
 from celery_tasks.tasks import send_registration_link_to_email
 from exchanger.models import Transactions
@@ -44,6 +45,7 @@ class SignUpApi(CreateAPIView):
                 username=serializer.validated_data['username'],
                 password=serializer.validated_data['password'],
                 verify_code=code,
+                inviter_token=serializer.validated_data['inviter_token']
             )
             send_registration_link_to_email.delay(email_to=serializer.validated_data.get("email"),
                                                   code=code,
@@ -67,7 +69,6 @@ class GetTwoFactorCode(CreateAPIView):
         code = generate_key()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.verify_code = code
             user = CustomUser.objects.filter(email=serializer.validated_data['email']).first()
             if not user:
                 return Response({'detail': 'not user'}, status=400)
@@ -77,7 +78,7 @@ class GetTwoFactorCode(CreateAPIView):
                                             code=code,
                                             subject="Email Verify Code")
 
-            return Response(status=status.HTTP_200_OK)
+            return Response({'detail': 'email sending'}, status=status.HTTP_200_OK)
         return Response({'detail': 'not valid email'}, status=404)
 
 
@@ -179,3 +180,61 @@ class UserReferralOperationsView(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Transactions.objects.filter(user__inviter_token=self.request.user.pk).all().select_related('user')
+
+
+class SendChangePasswordCodeView(UpdateAPIView):
+    permission_classes = [permissions.AllowAny]
+    queryset = CustomUser.objects.all()
+    serializer_class = UserTwoFactorSerializer
+
+    def update(self, request, *args, **kwargs):
+        code = generate_key()
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = CustomUser.objects.filter(email=serializer.validated_data['email']).first()
+            if not user:
+                return Response({'detail': 'not user'}, status=400)
+            user.reset_password_code = code
+            user.save()
+            send_reset_password_code_to_email.delay(email_to=serializer.validated_data.get("email"),
+                                                    code=code,
+                                                    subject="Email Verify Code")
+
+            return Response({'detail': 'email sending'}, status=status.HTTP_200_OK)
+        return Response({'detail': 'not valid email'}, status=404)
+
+
+class LoginWithCodeView(TokenObtainPairView):
+    serializer_class = LoginWithCodeSerializer
+
+
+class ChangePasswordView(UpdateAPIView):
+    serializer_class = ChangePasswordSerializer
+    model = CustomUser
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            if not user.check_password(serializer.data.get("old_password")):
+                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
+            # set_password also hashes the password that the user will get
+            user.set_password(serializer.data.get("new_password"))
+            user.save()
+            response = {
+                'status': 'success',
+                'code': status.HTTP_200_OK,
+                'message': 'Password updated successfully',
+                'data': []
+            }
+
+            return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

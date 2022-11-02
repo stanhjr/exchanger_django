@@ -28,7 +28,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 class GetUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['email', 'username', 'referral_url', 'wallet', 'level', 'sum_refers_eq_usdt', 'is_confirmed']
+        fields = ['email', 'username', 'referral_url', 'wallet', 'level', 'sum_refers_eq_usdt', 'is_confirmed', 'two_factor_auth']
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -63,6 +63,38 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 
+class LoginWithCodeSerializer(TokenObtainPairSerializer):
+    default_error_messages = {
+        'not_valid_code': _('not_valid_code'),
+
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['reset_password_code'] = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+
+        reset_password_code = attrs.get('reset_password_code')
+        user = CustomUser.objects.filter(reset_password_code=reset_password_code).first()
+        if not user:
+            raise AuthenticationFailed(
+                self.error_messages['no_active_account'],
+                'no_active_account',
+            )
+
+        user.reset_password_code = ''
+        user.save()
+        refresh = self.get_token(user)
+        data = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+
+        return data
+
+
 class UserBonusCalculateSerializer(serializers.Serializer):
     referral_number = serializers.IntegerField(required=True)
     price = serializers.IntegerField(required=True)
@@ -83,8 +115,15 @@ class UserReferralOperationsSerializer(serializers.ModelSerializer):
         fields = ['transaction_date', 'user_email', 'inviter_earned_by_transaction']
 
 
-class UserTwoFactorSerializer(serializers.ModelSerializer):
+class UserTwoFactorSerializer(serializers.Serializer):
+    email = serializers.CharField(required=True)
 
-    class Meta:
-        model = CustomUser
-        fields = ['email', ]
+
+class ChangePasswordSerializer(serializers.Serializer):
+    model = CustomUser
+
+    """
+    Serializer for password change endpoint.
+    """
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
