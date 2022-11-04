@@ -63,7 +63,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 
-class LoginWithCodeSerializer(TokenObtainPairSerializer):
+class LoginWithCodeSerializer(serializers.Serializer):
     default_error_messages = {
         'not_valid_code': _('not_valid_code'),
 
@@ -71,22 +71,21 @@ class LoginWithCodeSerializer(TokenObtainPairSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.fields['reset_password_code'] = serializers.CharField(required=True)
 
     def validate(self, attrs):
-
         reset_password_code = attrs.get('reset_password_code')
         user = CustomUser.objects.filter(reset_password_code=reset_password_code).first()
         if not user:
             raise AuthenticationFailed(
-                self.error_messages['no_active_account'],
+                self.default_error_messages['not_valid_code'],
                 'no_active_account',
             )
 
         user.reset_password_code = ''
         user.save()
-        refresh = self.get_token(user)
+
+        refresh = TokenObtainPairSerializer.get_token(user)
         data = {
             'refresh': str(refresh),
             'access': str(refresh.access_token),
