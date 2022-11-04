@@ -18,7 +18,7 @@ from account.serializers import (
     CustomTokenObtainPairSerializer,
     UserBonusCalculateSerializer,
     UserAnalyticsSerializer, UserReferralOperationsSerializer, UserTwoFactorSerializer, LoginWithCodeSerializer,
-    ChangePasswordSerializer
+    ChangePasswordSerializer, ChangeTwoFactorSerializer, ChangeEmailSerializer
 )
 
 from celery_tasks.tasks import generate_key, send_verify_code_to_email, send_reset_password_code_to_email
@@ -224,7 +224,6 @@ class ChangePasswordView(UpdateAPIView):
         if serializer.is_valid():
             if not user.check_password(serializer.data.get("old_password")):
                 return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
-            # set_password also hashes the password that the user will get
             user.set_password(serializer.data.get("new_password"))
             user.save()
             response = {
@@ -238,3 +237,59 @@ class ChangePasswordView(UpdateAPIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class ChangeTwoFactorView(UpdateAPIView):
+    serializer_class = ChangeTwoFactorSerializer
+    model = CustomUser
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user.two_factor_auth = serializer.data.get("two_factor_auth")
+            user.save()
+            response = {
+                'status': 'success',
+                'code': status.HTTP_200_OK,
+                'two_factor_auth': user.two_factor_auth,
+                'data': []
+            }
+
+            return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangeEmailView(UpdateAPIView):
+    serializer_class = ChangeEmailSerializer
+    model = CustomUser
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            if user.email != serializer.data.get("old_email"):
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            user.email = serializer.data.get("new_email")
+            user.save()
+            response = {
+                'status': 'success',
+                'code': status.HTTP_200_OK,
+                'two_factor_auth': user.two_factor_auth,
+                'data': []
+            }
+
+            return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

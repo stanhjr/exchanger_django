@@ -9,7 +9,7 @@ from account.views import (
     GetTwoFactorCode,
     SendChangePasswordCodeView,
     LoginWithCodeView,
-    ChangePasswordView
+    ChangePasswordView, ChangeTwoFactorView, ChangeEmailView
 )
 from account.views import UserRefAnalyticsView
 from account.views import UserViewSet
@@ -35,5 +35,7 @@ urlpatterns += [
     path('send-change-password-code/', SendChangePasswordCodeView.as_view(), name='send_change_password_code'),
     path('login-with-reset-password-code/', LoginWithCodeView.as_view(), name='login_with_reset_password_code'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
+    path('change-two-factor-auth/', ChangeTwoFactorView.as_view(), name='change-two-factor-auth'),
+    path('change-email/', ChangeEmailView.as_view(), name='change-two-factor-auth'),
 
 ]

@@ -126,3 +126,21 @@ class ChangePasswordSerializer(serializers.Serializer):
     """
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+
+class ChangeTwoFactorSerializer(serializers.Serializer):
+    model = CustomUser
+    """
+    Serializer for two_factor_authd change endpoint.
+    """
+    two_factor_auth = serializers.BooleanField(required=True)
+
+
+class ChangeEmailSerializer(serializers.Serializer):
+    model = CustomUser
+
+    """
+    Serializer for email change endpoint.
+    """
+    old_email = serializers.EmailField(required=True)
+    new_email = serializers.EmailField(required=True)
