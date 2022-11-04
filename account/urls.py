@@ -37,5 +37,4 @@ urlpatterns += [
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('change-two-factor-auth/', ChangeTwoFactorView.as_view(), name='change-two-factor-auth'),
     path('change-email/', ChangeEmailView.as_view(), name='change-two-factor-auth'),
-
 ]

@@ -45,7 +45,7 @@ class SignUpApi(CreateAPIView):
                 username=serializer.validated_data['username'],
                 password=serializer.validated_data['password'],
                 verify_code=code,
-                inviter_token=serializer.validated_data['inviter_token']
+                inviter_token=serializer.validated_data.get('inviter_token')
             )
             send_registration_link_to_email.delay(email_to=serializer.validated_data.get("email"),
                                                   code=code,
