@@ -58,37 +58,27 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 
-class LoginWithResetPasswordCodeSerializer(serializers.Serializer):
-    default_error_messages = {
-        'not_valid_code': _('not_valid_code'),
+class ResetPasswordWithCodeSerializer(serializers.Serializer):
+    model = CustomUser
 
-    }
+    """
+    Serializer for email change endpoint with code
+    """
+    reset_password_code = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['reset_password_code'] = serializers.CharField(required=True)
-
-    def validate(self, attrs):
-        reset_password_code = attrs.get('reset_password_code')
+    def validate(self, data):
+        reset_password_code = data.get('reset_password_code')
         user = CustomUser.objects.filter(reset_password_code=reset_password_code).first()
         if not user:
             raise AuthenticationFailed(
-                self.default_error_messages['not_valid_code'],
+                'not_valid_code',
                 'no_active_account',
             )
-
-        user.two_factor_auth_code = ''
+        user.set_password(data.get("new_password"))
+        user.reset_password_code = ''
         user.save()
-
-        refresh = TokenObtainPairSerializer.get_token(user)
-        data = {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
-        data.update({'user': GetUserSerializer(instance=user).data})
-
         return data
-
 
 class LoginWithTwoAuthCodeSerializer(serializers.Serializer):
     default_error_messages = {

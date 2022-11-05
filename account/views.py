@@ -23,8 +23,7 @@ from account.serializers import (
     ChangePasswordSerializer,
     ChangeTwoFactorSerializer,
     ChangeEmailSerializer,
-    LoginWithTwoAuthCodeSerializer,
-    LoginWithResetPasswordCodeSerializer
+    LoginWithTwoAuthCodeSerializer, ResetPasswordWithCodeSerializer,
 )
 
 from celery_tasks.tasks import generate_key, send_verify_code_to_email, send_reset_password_code_to_email
@@ -214,8 +213,25 @@ class SendChangePasswordCodeView(UpdateAPIView):
         return Response({'detail': 'not valid email'}, status=404)
 
 
-class LoginWithResetCodeView(TokenObtainPairView):
-    serializer_class = LoginWithResetPasswordCodeSerializer
+class ResetPasswordWithCodeView(UpdateAPIView):
+    serializer_class = ResetPasswordWithCodeSerializer
+    model = CustomUser
+
+    def update(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            response = {
+                'status': 'success',
+                'code': status.HTTP_200_OK,
+                'message': 'Password updated successfully',
+                'data': []
+            }
+
+            return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ChangePasswordView(UpdateAPIView):

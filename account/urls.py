@@ -6,13 +6,12 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from account.views import (
     SignUpApi,
     UserReferralOperationsView,
-    GetTwoFactorCode,
     SendChangePasswordCodeView,
-    LoginWithResetCodeView,
     LoginWithTwoAuthCodeView,
     ChangePasswordView,
     ChangeTwoFactorView,
-    ChangeEmailView
+    ChangeEmailView,
+    ResetPasswordWithCodeView
 )
 from account.views import UserRefAnalyticsView
 from account.views import UserViewSet
@@ -36,7 +35,7 @@ urlpatterns += [
     path('referral-statistics/', UserRefAnalyticsView.as_view({'get': 'list'}), name='referral-statistics'),
     path('referral-operations-list/', UserReferralOperationsView.as_view({'get': 'list'}), name='referral-statistics'),
     path('send-change-password-code/', SendChangePasswordCodeView.as_view(), name='send_change_password_code'),
-    path('login-with-reset-password-code/', LoginWithResetCodeView.as_view(), name='login_with_reset_password_code'),
+    path('reset-password-with-code/', ResetPasswordWithCodeView.as_view(), name='login_with_reset_password_code'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('change-two-factor-auth/', ChangeTwoFactorView.as_view(), name='change-two-factor-auth'),
     path('change-email/', ChangeEmailView.as_view(), name='change-two-factor-auth'),
