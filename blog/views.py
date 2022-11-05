@@ -61,7 +61,9 @@ class PostListSearch(generics.ListAPIView):
     def get_queryset(self):
         search_string = self.request.query_params.get("search_string")
         if search_string:
-            return Post.objects.filter(translations__icontains=search_string).distinct()
+            q1 = Q(translations__title__icontains=search_string)
+            q2 = Q(translations__text__icontains=search_string)
+            return Post.objects.filter(q1 | q2 ).distinct()
         return Post.objects.all()
 
 
