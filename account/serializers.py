@@ -4,7 +4,9 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.utils.translation import gettext_lazy as _
 
+from account.exception_custom import TwoFactorAuthException
 from account.models import CustomUser
+from celery_tasks.tasks import generate_key, send_verify_code_to_email
 from exchanger.models import Transactions
 
 
@@ -28,22 +30,13 @@ class SignUpSerializer(serializers.ModelSerializer):
 class GetUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['email', 'username', 'referral_url', 'wallet', 'level', 'sum_refers_eq_usdt', 'is_confirmed', 'two_factor_auth']
+        fields = ['email', 'username', 'referral_url', 'wallet', 'level', 'sum_refers_eq_usdt', 'is_confirmed',
+                  'two_factor_auth']
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    default_error_messages = {
-        'not_two_factor_auth_code': _('not or not valid two_factor_auth_code'),
-
-    }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.fields['two_factor_auth_code'] = serializers.CharField(required=False)
 
     def validate(self, attrs):
-
         username = attrs.get('username')
         user = CustomUser.objects.filter(username=username).first()
         if not user:
@@ -51,19 +44,21 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 self.error_messages['no_active_account'],
                 'no_active_account',
             )
-        if user.two_factor_auth and user.two_factor_auth_code != attrs.get('two_factor_auth_code'):
-            raise AuthenticationFailed(
-                self.error_messages['not_two_factor_auth_code'],
-                'not_two_factor_auth_code',
-            )
-        user.two_factor_auth_code = ''
-        user.save()
+        if user.two_factor_auth:
+            code = generate_key()
+            user.two_factor_auth_code = code
+            user.save()
+            send_verify_code_to_email.delay(email_to=user.email,
+                                            code=code,
+                                            subject="Email Verify Code")
+            raise TwoFactorAuthException()
+
         data = super(CustomTokenObtainPairSerializer, self).validate(attrs)
-        data.update({'user': GetUserSerializer(instance=self.user).data})
+        data.update({'user': GetUserSerializer(instance=user).data})
         return data
 
 
-class LoginWithCodeSerializer(serializers.Serializer):
+class LoginWithResetPasswordCodeSerializer(serializers.Serializer):
     default_error_messages = {
         'not_valid_code': _('not_valid_code'),
 
@@ -82,7 +77,7 @@ class LoginWithCodeSerializer(serializers.Serializer):
                 'no_active_account',
             )
 
-        user.reset_password_code = ''
+        user.two_factor_auth_code = ''
         user.save()
 
         refresh = TokenObtainPairSerializer.get_token(user)
@@ -90,7 +85,39 @@ class LoginWithCodeSerializer(serializers.Serializer):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }
+        data.update({'user': GetUserSerializer(instance=user).data})
 
+        return data
+
+
+class LoginWithTwoAuthCodeSerializer(serializers.Serializer):
+    default_error_messages = {
+        'not_valid_code': _('not_valid_code'),
+
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['two_auth_code'] = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        two_auth_code = attrs.get('two_auth_code')
+        user = CustomUser.objects.filter(two_factor_auth_code=two_auth_code).first()
+        if not user:
+            raise AuthenticationFailed(
+                self.default_error_messages['not_valid_code'],
+                'no_active_account',
+            )
+
+        user.two_factor_auth_code = ''
+        user.save()
+
+        refresh = TokenObtainPairSerializer.get_token(user)
+        data = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+        data.update({'user': GetUserSerializer(instance=user).data})
         return data
 
 

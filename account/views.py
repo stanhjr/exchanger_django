@@ -17,8 +17,14 @@ from account.serializers import (
     GetUserSerializer,
     CustomTokenObtainPairSerializer,
     UserBonusCalculateSerializer,
-    UserAnalyticsSerializer, UserReferralOperationsSerializer, UserTwoFactorSerializer, LoginWithCodeSerializer,
-    ChangePasswordSerializer, ChangeTwoFactorSerializer, ChangeEmailSerializer
+    UserAnalyticsSerializer,
+    UserReferralOperationsSerializer,
+    UserTwoFactorSerializer,
+    ChangePasswordSerializer,
+    ChangeTwoFactorSerializer,
+    ChangeEmailSerializer,
+    LoginWithTwoAuthCodeSerializer,
+    LoginWithResetPasswordCodeSerializer
 )
 
 from celery_tasks.tasks import generate_key, send_verify_code_to_email, send_reset_password_code_to_email
@@ -134,6 +140,10 @@ class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 
+class LoginWithTwoAuthCodeView(TokenObtainPairView):
+    serializer_class = LoginWithTwoAuthCodeSerializer
+
+
 class UserBonusPreCalculateView(views.APIView):
 
     @swagger_auto_schema(manual_parameters=[schema.referral_number, schema.price])
@@ -204,8 +214,8 @@ class SendChangePasswordCodeView(UpdateAPIView):
         return Response({'detail': 'not valid email'}, status=404)
 
 
-class LoginWithCodeView(TokenObtainPairView):
-    serializer_class = LoginWithCodeSerializer
+class LoginWithResetCodeView(TokenObtainPairView):
+    serializer_class = LoginWithResetPasswordCodeSerializer
 
 
 class ChangePasswordView(UpdateAPIView):
