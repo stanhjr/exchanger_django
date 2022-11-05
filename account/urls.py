@@ -11,7 +11,7 @@ from account.views import (
     ChangePasswordView,
     ChangeTwoFactorView,
     ChangeEmailView,
-    ResetPasswordWithCodeView
+    ResetPasswordWithCodeView, LoginRefreshView
 )
 from account.views import UserRefAnalyticsView
 from account.views import UserViewSet
@@ -26,7 +26,7 @@ urlpatterns += [
     path('sign_up/', SignUpApi.as_view(), name='sign_up'),
     path('login/',  LoginView.as_view(), name='token_obtain_pair'),
     path('login-with-two-auth-code/',  LoginWithTwoAuthCodeView.as_view(), name='login_with_two_auth_code'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/refresh/', LoginRefreshView.as_view(), name='token_refresh'),
     path('user_info/', UserViewSet.as_view({'get': 'list'}), name='user_info'),
     path('account-activate/', SignUpConfirm.as_view(), name='account-activate'),
     path('get-bonus-calculate/', UserBonusPreCalculateView.as_view(), name='get-bonus_calculate'),

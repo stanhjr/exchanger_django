@@ -7,7 +7,7 @@ from rest_framework import permissions, viewsets, status, views
 from rest_framework.generics import CreateAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from account.models import CustomUser
 from account import schema
@@ -23,7 +23,7 @@ from account.serializers import (
     ChangePasswordSerializer,
     ChangeTwoFactorSerializer,
     ChangeEmailSerializer,
-    LoginWithTwoAuthCodeSerializer, ResetPasswordWithCodeSerializer,
+    LoginWithTwoAuthCodeSerializer, ResetPasswordWithCodeSerializer, CustomTokenRefreshSerializer,
 )
 
 from celery_tasks.tasks import generate_key, send_verify_code_to_email, send_reset_password_code_to_email
@@ -137,6 +137,10 @@ class SignUpConfirm(RedirectView):
 
 class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+
+class LoginRefreshView(TokenRefreshView):
+    serializer_class = CustomTokenRefreshSerializer
 
 
 class LoginWithTwoAuthCodeView(TokenObtainPairView):

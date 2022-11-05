@@ -1,8 +1,10 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.backends import TokenBackend
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from django.utils.translation import gettext_lazy as _
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from account.exception_custom import TwoFactorAuthException
 from account.models import CustomUser
@@ -32,6 +34,16 @@ class GetUserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'username', 'referral_url', 'wallet', 'level', 'sum_refers_eq_usdt', 'is_confirmed',
                   'two_factor_auth']
+
+
+class CustomTokenRefreshSerializer(TokenRefreshSerializer):
+    def validate(self, attrs):
+        attrs = super(CustomTokenRefreshSerializer, self).validate(attrs)
+        refresh_token = RefreshToken(attrs['refresh'])
+        access_token = refresh_token.access_token
+        user = CustomUser.objects.get(id=access_token['user_id'])
+        attrs.update({'user': GetUserSerializer(instance=user).data})
+        return attrs
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -79,6 +91,7 @@ class ResetPasswordWithCodeSerializer(serializers.Serializer):
         user.reset_password_code = ''
         user.save()
         return data
+
 
 class LoginWithTwoAuthCodeSerializer(serializers.Serializer):
     default_error_messages = {
