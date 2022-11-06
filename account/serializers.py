@@ -56,6 +56,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 self.error_messages['no_active_account'],
                 'no_active_account',
             )
+        if not user.check_password(attrs.get('password')):
+            raise AuthenticationFailed(
+                'not valid password or no_active_account',
+                'not valid password or no_active_account',
+            )
         if user.two_factor_auth:
             code = generate_key()
             user.two_factor_auth_code = code
