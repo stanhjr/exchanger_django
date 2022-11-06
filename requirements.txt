@@ -50,3 +50,4 @@ wrapt==1.14.1
 
 django-parler~=2.3
 django-parler-rest~=2.2
+Faker==13.14.0
