@@ -13,6 +13,9 @@ config = {
         'celery_tasks.tasks.send_verify_code_to_email': {
             'queue': 'celery_tasks'
         },
+        'celery_tasks.tasks.send_transaction_satus': {
+            'queue': 'celery_tasks'
+        },
 
     },
     'accept_content': ['json', 'application/x-python-serialize'],

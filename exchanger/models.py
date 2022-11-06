@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 from account.models import CustomUser
+from celery_tasks.tasks import send_transaction_satus
 
 
 class Currency(models.Model):
@@ -118,6 +119,9 @@ class Transactions(models.Model):
         if self.status == status_dict.get(self.status):
             self.status = status_dict.get(self.status)
             self.save(status_update=True)
+        send_transaction_satus.delay(email_to=self.user.email,
+                                     transaction_id=self.unique_id,
+                                     transaction_status=self.status)
 
     @property
     def market(self):
