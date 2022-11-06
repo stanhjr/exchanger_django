@@ -46,3 +46,9 @@ class TransactionsSerializerResponse(serializers.ModelSerializer):
 class CalculateSerializer(serializers.Serializer):
     pairs_id = serializers.IntegerField(required=True)
     price = serializers.FloatField(required=True)
+
+
+class WhiteBitSerializer(serializers.Serializer):
+    method = serializers.CharField()
+    id = serializers.UUIDField()
+    params = serializers.JSONField()

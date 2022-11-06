@@ -1,3 +1,4 @@
+import uuid
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -9,6 +10,8 @@ from account.models import CustomUser
 
 class Currency(models.Model):
     name = models.CharField(max_length=100)
+    network = models.CharField(max_length=10, null=True, blank=True)
+    name_from_white_bit = models.CharField(max_length=50, null=True, blank=True)
     image_icon = models.ImageField(upload_to='currency_images/%Y/%m/%d/', null=True, max_length=255)
 
     class Meta:
@@ -17,6 +20,12 @@ class Currency(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def name_with_protocol(self):
+        if self.network:
+            return f'{self.name_from_white_bit} ({self.network})'
+        return self.name_from_white_bit
 
 
 class ExchangeRates(models.Model):
@@ -68,6 +77,16 @@ class ExchangeRates(models.Model):
 
 
 class Transactions(models.Model):
+    unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    STATUS_CHOICES = [
+        ('payment_expected', 'payment_expected'),
+        ('payment_received', 'payment_received'),
+        ('currency_changing', 'currency_changing'),
+        ('create_for_payment', 'create_for_payment'),
+        ('complete', 'complete'),
+    ]
+    status = models.CharField(choices=STATUS_CHOICES, default='payment_expected', max_length=30)
+
     user = models.ForeignKey(CustomUser, related_name='transactions', on_delete=models.DO_NOTHING, blank=True,
                              null=True)
     currency_exchange = models.ForeignKey(Currency, related_name='transaction_exchange', on_delete=models.DO_NOTHING)
@@ -82,11 +101,27 @@ class Transactions(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     is_confirm = models.BooleanField(default=False)
     reference_dollars = models.DecimalField(null=True, blank=True, max_digits=60, decimal_places=30)
+    address = models.CharField(null=True, blank=True, max_length=300)
 
     class Meta:
         verbose_name = 'Transactions'
         verbose_name_plural = 'Transaction'
         ordering = ['created_at']
+
+    def status_update(self) -> None:
+        status_dict = {
+            'payment_expected': 'payment_received',
+            'payment_received': 'currency_changing',
+            'currency_changing': 'create_for_payment',
+            'create_for_payment': 'complete',
+        }
+        if self.status == status_dict.get(self.status):
+            self.status = status_dict.get(self.status)
+            self.save(status_update=True)
+
+    @property
+    def market(self):
+        return f'{self.currency_exchange.name_from_white_bit}_{self.currency_received.name_from_white_bit}'
 
     @property
     def transaction_date(self):
@@ -109,7 +144,10 @@ class Transactions(models.Model):
         else:
             return f'AnonymousUser | {self.currency_exchange} -> {self.currency_received} | {self.amount_exchange}'
 
-    def save(self, pairs_id=None, is_confirm=True, *args, **kwargs):
+    def save(self, pairs_id=None, is_confirm=True, status_update=None, *args, **kwargs):
+        if status_update:
+            return super().save(*args, **kwargs)
+
         if is_confirm:
             inviter = CustomUser.get_inviter(self.user.inviter_token)
             if self.is_confirm and inviter:

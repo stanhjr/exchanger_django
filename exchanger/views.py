@@ -1,14 +1,17 @@
+from django.conf import settings
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework import views
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from exchanger import schema
 
 from exchanger.models import ExchangeRates
 from exchanger.models import Transactions
 from exchanger.models import Currency
 
-from exchanger.serializers import CalculateSerializer
+from exchanger.serializers import CalculateSerializer, WhiteBitSerializer
 from exchanger.serializers import TransactionsSerializerResponse
 from exchanger.serializers import ExchangeSerializer
 from exchanger.serializers import TransactionsSerializer
@@ -70,3 +73,18 @@ class TransactionsView(generics.CreateAPIView):
             return Response({'message': 'transaction create', **response_serializer.data},
                             status=status.HTTP_201_CREATED)
         return Response({'detail': 'not valid data'}, status=404)
+
+
+class WhiteBitWebHook(APIView):
+
+    def post(self, request, format=None):
+        if request.META['X-TXC-APIKEY'] != settings.WHITEBIT_API_KEY:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = WhiteBitSerializer(data=request.data)
+
+        if serializer.is_valid():
+
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,0 +1,2 @@
+class ExchangeAmountMinMaxError(Exception):
+    pass
