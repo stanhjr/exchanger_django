@@ -8,6 +8,15 @@ from exchanger.models import ProfitModel
 
 admin.site.register(Currency)
 admin.site.register(ExchangeRates)
-admin.site.register(Transactions)
 admin.site.register(ProfitTotal)
 admin.site.register(ProfitModel)
+
+
+@admin.register(Transactions)
+class TransactionsAdmin(admin.ModelAdmin):
+    readonly_fields = ("unique_id", "address")
+    list_display = ("user", "email", "currency_exchange", "currency_received",
+                    "amount_exchange", "status", "failed", "unique_id")
+    list_filter = ("status", "failed")
+    search_fields = ("user__email__icontains", "unique_id", "email")
+    list_per_page = 50

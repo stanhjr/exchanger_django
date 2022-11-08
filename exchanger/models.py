@@ -61,7 +61,7 @@ class Currency(models.Model):
         verbose_name_plural = 'Currency'
 
     def __str__(self):
-        return self.name
+        return self.name_from_white_bit
 
     @property
     def name_with_protocol(self):
@@ -86,8 +86,14 @@ class ExchangeRates(models.Model):
         verbose_name_plural = 'Exchange Rates'
 
     @property
+    def fiat_to_crypto(self) -> bool:
+        if self.currency_left.fiat:
+            return True
+        return False
+
+    @property
     def min_value(self):
-        return self.currency_left.min_deposit
+        return Decimal(self.currency_left.min_deposit)
 
     @property
     def max_value(self):
@@ -97,8 +103,8 @@ class ExchangeRates(models.Model):
             max_right = self.currency_right.max_withdraw / self.value_left
 
         if max_right < self.currency_left.max_deposit:
-            return max_right
-        return self.currency_left.max_deposit
+            return Decimal(max_right)
+        return Decimal(self.currency_left.max_deposit)
 
     @property
     def market(self):
@@ -163,16 +169,17 @@ class ExchangeRates(models.Model):
 
 
 class Transactions(models.Model):
-    unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    unique_id = models.UUIDField(default=uuid.uuid4, editable=True)
+    deposit_address = models.CharField(null=True, blank=True, max_length=1024)
     STATUS_CHOICES = [
-        ('payment_expected', 'payment_expected'),
-        ('payment_received', 'payment_received'),
-        ('currency_changing', 'currency_changing'),
-        ('create_for_payment', 'create_for_payment'),
-        ('complete', 'complete'),
+        ('created', 'created'),  # created (default)
+        ('payment_received', 'payment_received'),  # webhook received
+        ('currency_changing', 'currency_changing'),  # start changing
+        ('create_for_payment', 'create_for_payment'),  # create withdraw
+        ('withdraw_pending', 'withdraw_pending'),  # withdraw pending
+        ('completed', 'completed'),  # completed
     ]
-    status = models.CharField(choices=STATUS_CHOICES, default='payment_expected', max_length=30)
-
+    status = models.CharField(choices=STATUS_CHOICES, default='created', max_length=30)
     user = models.ForeignKey(CustomUser, related_name='transactions', on_delete=models.DO_NOTHING, blank=True,
                              null=True)
     currency_exchange = models.ForeignKey(Currency, related_name='transaction_exchange', on_delete=models.DO_NOTHING)
@@ -183,23 +190,27 @@ class Transactions(models.Model):
     amount_received = models.DecimalField(default=1,
                                           validators=[MinValueValidator(0), ],
                                           max_digits=60, decimal_places=30)
-
     created_at = models.DateTimeField(default=timezone.now)
+    status_time_update = models.DateTimeField(auto_now=True)
     is_confirm = models.BooleanField(default=False)
+    failed = models.BooleanField(default=False)
+    failed_error = models.CharField(blank=True, null=True, max_length=200)
     reference_dollars = models.DecimalField(null=True, blank=True, max_digits=60, decimal_places=30)
-    address = models.CharField(null=True, blank=True, max_length=300)
+    address = models.CharField(max_length=1000)
+    email = models.EmailField(null=True)
 
     class Meta:
         verbose_name = 'Transactions'
         verbose_name_plural = 'Transaction'
-        ordering = ['created_at']
+        ordering = ['-created_at', 'is_confirm']
 
     def status_update(self) -> None:
         status_dict = {
-            'payment_expected': 'payment_received',
+            'created': 'payment_received',
             'payment_received': 'currency_changing',
             'currency_changing': 'create_for_payment',
-            'create_for_payment': 'complete',
+            'create_for_payment': 'withdraw_pending',
+            'withdraw_pending': 'completed',
         }
         if self.status == status_dict.get(self.status):
             self.status = status_dict.get(self.status)
@@ -207,6 +218,12 @@ class Transactions(models.Model):
         send_transaction_satus.delay(email_to=self.user.email,
                                      transaction_id=self.unique_id,
                                      transaction_status=self.status)
+
+    @property
+    def crypto_to_fiat(self) -> bool:
+        if self.currency_received.fiat:
+            return True
+        return False
 
     @property
     def market(self):
@@ -233,12 +250,17 @@ class Transactions(models.Model):
         else:
             return f'AnonymousUser | {self.currency_exchange} -> {self.currency_received} | {self.amount_exchange}'
 
-    def save(self, pairs_id=None, is_confirm=True, status_update=None, *args, **kwargs):
+    def save(self, pairs_id=None, is_confirm=True, status_update=None, failed_error=None, *args, **kwargs):
         if status_update:
+            return super().save(*args, **kwargs)
+        if failed_error:
             return super().save(*args, **kwargs)
 
         if is_confirm:
-            inviter = CustomUser.get_inviter(self.user.inviter_token)
+            if not self.user:
+                inviter = None
+            else:
+                inviter = CustomUser.get_inviter(self.user.inviter_token)
             if self.is_confirm and inviter:
                 inviter.wallet += self.user.get_percent_profit_price(self.currency_exchange)
                 inviter.set_level(commit=False)
@@ -251,12 +273,17 @@ class Transactions(models.Model):
         exchange_pair = ExchangeRates.objects.filter(id=pairs_id).first()
         if not exchange_pair:
             return super().save(*args, **kwargs)
+        if Decimal(self.amount_exchange) > exchange_pair.max_value:
+            raise ValidationError('amount_exchange more than allowed values')
+        if Decimal(self.amount_exchange) < exchange_pair.min_value:
+            raise ValidationError('amount_exchange less than allowed values')
+
         self.currency_exchange = exchange_pair.currency_left
         self.currency_received = exchange_pair.currency_right
         self.amount_received = exchange_pair.get_calculate(self.amount_exchange)
 
-        currency_usdt = Currency.objects.filter(name='USDT').first()
-        currency_uah = Currency.objects.filter(name__icontains='UAH').first()
+        currency_usdt = Currency.objects.filter(name_from_white_bit='USDT').first()
+        currency_uah = Currency.objects.filter(name_from_white_bit='UAH').first()
         if not currency_usdt or not currency_uah:
             raise ValidationError
 

@@ -50,6 +50,8 @@ class CustomUser(AbstractUser):
 
     @classmethod
     def get_inviter(cls, referral_token=None):
+        if not referral_token:
+            return None
         return cls.objects.filter(id=referral_token).first()
 
     @classmethod

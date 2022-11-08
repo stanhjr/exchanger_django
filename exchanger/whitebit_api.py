@@ -9,6 +9,7 @@ import requests
 from django.conf import settings
 
 from exchanger.exchange_exceptions import ExchangeAmountMinMaxError
+from exchanger.exchange_exceptions import ExchangeTradeError
 
 
 class WhiteBitAbstract:
@@ -64,6 +65,12 @@ class WhiteBitApi(WhiteBitAbstract):
         response = requests.post(complete_url, headers=headers, data=data_json)
         return response.json()
 
+    def __get_response_status_code(self, data: dict, complete_url: str) -> int:
+        data_json = self.__get_data_json(data)
+        headers = self.__get_headers(data_json)
+        response = requests.post(complete_url, headers=headers, data=data_json)
+        return response.status_code
+
     def __transfer_to_trade_balance(self, currency: str, amount_price: str):
         request_url = '/api/v4/main-account/fiat-deposit-url'
         data = {
@@ -74,9 +81,9 @@ class WhiteBitApi(WhiteBitAbstract):
             "request": request_url,
             "nonce": self.__nonce
         }
-        result = self.__get_response_dict(data=data, complete_url=self.base_url + request_url)
+        return self.__get_response_status_code(data=data, complete_url=self.base_url + request_url)
 
-    def __transfer_to_main_balance(self, currency: str, amount_price: str):
+    def __transfer_to_main_balance(self, currency: str, amount_price: str) -> int:
         request_url = '/api/v4/main-account/fiat-deposit-url'
         data = {
             "ticker": currency,
@@ -86,9 +93,9 @@ class WhiteBitApi(WhiteBitAbstract):
             "request": request_url,
             "nonce": self.__nonce
         }
-        result = self.__get_response_dict(data=data, complete_url=self.base_url + request_url)
+        return self.__get_response_status_code(data=data, complete_url=self.base_url + request_url)
 
-    def create_stock_market(self, amount_price: str, market: str, client_order_id: str):
+    def create_stock_market(self, amount_price: str, market: str, client_order_id: str) -> int:
         request_url = '/api/v4/order/stock_market'
         data = {
             "market": market,
@@ -98,14 +105,15 @@ class WhiteBitApi(WhiteBitAbstract):
             "request": request_url,
             "nonce": self.__nonce,
         }
-        result = self.__get_response_dict(data=data, complete_url=self.base_url + request_url)
+        return self.__get_response_status_code(data=data, complete_url=self.base_url + request_url)
 
-    def create_withdraw_crypto(self, amount_price: Decimal, currency: str, address: str, unique_id: str, network: str):
+    def create_withdraw(self, amount_price: str, currency: str, address: str, unique_id: str,
+                        network: str = None, provider: bool = False):
 
         request_url = '/api/v4/main-account/withdraw'
         data = {
             "ticker": currency,
-            "amount": str(amount_price),
+            "amount": amount_price,
             "address": address,
             "uniqueId": unique_id,
             "request": request_url,
@@ -113,6 +121,9 @@ class WhiteBitApi(WhiteBitAbstract):
         }
         if network:
             data.update(network=network)
+        if provider:
+            data.pop("network")
+            data.update(provider=network)
 
         data_json = self.__get_data_json(data)
         headers = self.__get_headers(data_json)
@@ -129,26 +140,36 @@ class WhiteBitApi(WhiteBitAbstract):
         :param amount_price:
         :return: deposit address
         """
-        if not self.__check_to_deposit(white_bit_currency_name=currency_ticker, amount_price=amount_price):
+        if not self.__check_to_deposit(white_bit_currency_name=currency_ticker,
+                                       amount_price=amount_price,
+                                       network=network):
             raise ExchangeAmountMinMaxError
         request_url = '/api/v4/main-account/create-new-address'
 
         data = {
             "ticker": currency_ticker,
             "request": request_url,
-            "network": network,
             "nonce": self.__nonce
         }
+        if network:
+            data.update(network=network)
         result = self.__get_response_dict(data=data, complete_url=self.base_url + request_url)
         return result.get("account")["address"]
 
     def get_fiat_form(self, transaction_unique_id: str, amount_price: str):
+        """
+        Takes transaction unique and amount_price, returner link for payment
+
+        :param transaction_unique_id:
+        :param amount_price:
+        :return:
+        """
         request_url = '/api/v4/main-account/fiat-deposit-url'
         data = {
             "ticker": "UAH",
             "provider": "VISAMASTER",
             "amount": amount_price,
-            "uniqueId": transaction_unique_id,
+            "uniqueId": str(transaction_unique_id),
             "request": request_url,
             "nonce": self.__nonce
         }
@@ -156,6 +177,12 @@ class WhiteBitApi(WhiteBitAbstract):
         return result.get("url")
 
     def get_commission_to_deposit(self, white_bit_currency_name: str, amount_price: Decimal):
+        """
+        DEPRECATED
+        :param white_bit_currency_name:
+        :param amount_price:
+        :return:
+        """
         info_for_crypto = self.get_info_for_crypto(white_bit_currency_name)
         min_amount = float(info_for_crypto['deposit']['min_amount'])
         max_amount = float(info_for_crypto['deposit']['max_amount'])
@@ -167,8 +194,8 @@ class WhiteBitApi(WhiteBitAbstract):
             return 0
         return Decimal(info_for_crypto['deposit']['fixed'])
 
-    def __check_to_deposit(self, white_bit_currency_name: str, amount_price: Decimal):
-        info_for_crypto = self.get_info_for_crypto(white_bit_currency_name)
+    def __check_to_deposit(self, white_bit_currency_name: str, amount_price: Decimal, network: str):
+        info_for_crypto = self.get_info_for_crypto(white_bit_currency_name, network=network)
         min_amount = float(info_for_crypto['deposit']['min_amount'])
         max_amount = float(info_for_crypto['deposit']['max_amount'])
         if float(amount_price) < min_amount:
@@ -189,45 +216,63 @@ class WhiteBitApi(WhiteBitAbstract):
             return 0
         return Decimal(info_for_crypto['withdraw']['fixed'])
 
-    def get_info_for_crypto(self, white_bit_currency_name: str) -> dict:
+    def get_info_for_crypto(self, white_bit_currency_name: str, network: str) -> dict:
         """
-        Takes white_bit_currency_name    BTC, USDT (TRC20), ETH (ERC20)
+        Takes white_bit_currency_name and network    BTC, USDT (TRC20), ETH (ERC20)
         returned info for currency
+        :param network:
         :param white_bit_currency_name:
         :return:
         """
         request_url = '/api/v4/public/fee'
         response = requests.get(url=self.base_url + request_url)
         result_dict = response.json()
-        return result_dict.get(white_bit_currency_name)
+        currency_name = f"{white_bit_currency_name} ({network})" if network else white_bit_currency_name
+        return result_dict.get(currency_name)
 
-    def start_exchange_fiat_to_crypto(self, transaction_obj):
-        # TODO WEBHOOK, VALIDATION and etc
-        # payment expected
-        transaction_obj.status_update()
-        client_order_id = f'order_{transaction_obj.unique_id}'
-        currency_name = transaction_obj.currency_received.name_from_white_bit
-        amount_received = transaction_obj.amount_received
-        amount_exchange = str(transaction_obj.amount_exchange)
+    def start_trading(self, unique_id: str, name_from_white_bit_exchange: str, name_from_white_bit_received: str,
+                      market: str, amount_received: str, amount_exchange: str):
+        """
+        Takes params and exchange from WhiteBit, returned True If the exchange was successful
+        raise ExchangeTradeError If the exchange was not successful
+
+        :param unique_id:
+        :param name_from_white_bit_exchange:
+        :param name_from_white_bit_received:
+        :param market:
+        :param amount_received:
+        :param amount_exchange:
+        :return: True
+        """
+
+        client_order_id = f'order_{unique_id}'
 
         # start exchange
-        transaction_obj.status_update()
-        self.__transfer_to_trade_balance(currency='UAH',
-                                         amount_price=amount_exchange)
-        self.create_stock_market(amount_price=amount_received,
-                                 market=transaction_obj.market,
-                                 client_order_id=client_order_id)
-        self.__transfer_to_main_balance(currency=transaction_obj.currency_received.name_from_white_bit,
-                                        amount_price=transaction_obj.amount_received)
+        status_code = self.__transfer_to_trade_balance(currency=name_from_white_bit_exchange,
+                                                       amount_price=amount_exchange)
+        if status_code > 210:
+            raise ExchangeTradeError('transfer_to_trade_balance failed')
 
-        transaction_obj.status_update()
-        withdraw_crypto = self.create_withdraw_crypto(amount_price=amount_received,
-                                                      currency=currency_name,
-                                                      unique_id=transaction_obj.pk,
-                                                      address=transaction_obj.address,
-                                                      network=transaction_obj.currency_received.network)
-        if withdraw_crypto:
-            transaction_obj.status_update()
+        status_code = self.create_stock_market(amount_price=amount_received,
+                                               market=market,
+                                               client_order_id=client_order_id)
+        if status_code > 210:
+            raise ExchangeTradeError('create_stock_market')
+
+        status_code = self.__transfer_to_main_balance(currency=name_from_white_bit_received,
+                                                      amount_price=amount_received)
+
+        if status_code > 210:
+            raise ExchangeTradeError('transfer_to_main_balance failed')
+
+        return True
+
+    def start_withdraw(self, amount_received: str, currency_name: str, unique_id: str, address: str, network=None):
+        withdraw_crypto = self.create_withdraw(amount_price=amount_received,
+                                               currency=currency_name,
+                                               unique_id=unique_id,
+                                               address=address,
+                                               network=network)
 
 
 white_bit = WhiteBitInfo()

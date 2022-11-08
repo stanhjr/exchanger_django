@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'blog',
     'important_info',
     'exchanger',
+    'webhook',
 ]
 
 MIDDLEWARE = [
