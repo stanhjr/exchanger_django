@@ -19,6 +19,12 @@ config = {
         'celery_tasks.tasks.update_exchange_rates': {
             'queue': 'update_rates'
         },
+        'celery_tasks.tasks.fixer_failed_trade': {
+            'queue': 'update_rates'
+        },
+        'celery_tasks.tasks.fixer_failed_withdraw': {
+            'queue': 'update_rates'
+        },
 
     },
     'accept_content': ['json', 'application/x-python-serialize'],

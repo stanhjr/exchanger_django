@@ -195,6 +195,7 @@ class Transactions(models.Model):
     is_confirm = models.BooleanField(default=False)
     failed = models.BooleanField(default=False)
     failed_error = models.CharField(blank=True, null=True, max_length=200)
+    try_fixed_count_error = models.IntegerField(default=0)
     reference_dollars = models.DecimalField(null=True, blank=True, max_digits=60, decimal_places=30)
     address = models.CharField(max_length=1000)
     email = models.EmailField(null=True)

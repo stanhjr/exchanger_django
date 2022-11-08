@@ -34,7 +34,9 @@ def generate_key() -> str:
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(10.0, update_exchange_rates.s(), name='update_exchange_rates')
+    sender.add_periodic_task(15.0, update_exchange_rates.s(), name='update_exchange_rates')
+    sender.add_periodic_task(120.0, fixer_failed_withdraw.s(), name='fixer_failed_withdraw')
+    sender.add_periodic_task(120.0, fixer_failed_trade.s(), name='fixer_failed_trade')
 
 
 @app.task
@@ -194,3 +196,73 @@ def update_exchange_rates():
     Currency.update_min_max_value(assets_dict=white_bit.get_assets_dict())
     ExchangeRates.update_rates(tickers_list=white_bit.get_tickers_list())
     return "currency and exchange rates updates"
+
+
+@app.task
+def fixer_failed_trade():
+    from exchanger.models import Transactions
+    from exchanger.whitebit_api import WhiteBitApi
+    from exchanger.exchange_exceptions import ExchangeTradeError
+    from django.utils import timezone
+    from datetime import timedelta
+    transactions = Transactions.objects.filter(failed=True,
+                                               status='payment_received',
+                                               try_fixed_count_error__lte=4,
+                                               status_time_update__lte=timezone.now() - timedelta(seconds=60)).all()
+    if not transactions:
+        return
+    white_bit_api = WhiteBitApi()
+    for transaction in transactions:
+        try:
+            white_bit_api.start_trading(
+                unique_id=transaction.unique_id,
+                name_from_white_bit_exchange=transaction.currency_exchange.name_from_white_bit,
+                name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
+                market=transaction.market,
+                amount_exchange=transaction.amount_exchange,
+                amount_received=transaction.amount_received
+            )
+            # status to currency_changing
+            transaction.failed = False
+            transaction.failed_error = None
+            transaction.try_fixed_count_error = 0
+            transaction.status_update()
+            return 'Fixed trade'
+        except ExchangeTradeError as e:
+            print(e)
+            transaction.try_fixed_count_error += 1
+            transaction.save(failed_error=str(e))
+            return 'Retry trade'
+
+
+@app.task
+def fixer_failed_withdraw():
+    from exchanger.models import Transactions
+    from exchanger.whitebit_api import WhiteBitApi
+    from django.utils import timezone
+    from datetime import timedelta
+    transactions = Transactions.objects.filter(failed=True,
+                                               status='currency_changing',
+                                               try_fixed_count_error__lte=4,
+                                               status_time_update__lte=timezone.now() - timedelta(seconds=60)).all()
+    if not transactions:
+        return
+    white_bit_api = WhiteBitApi()
+    for transaction in transactions:
+        withdraw_crypto = white_bit_api.create_withdraw(
+            unique_id=transaction.unique_id,
+            network=transaction.currency_received.network,
+            currency=transaction.currency_received.name_from_white_bit,
+            address=transaction.address,
+            amount_price=transaction.amount_received
+        )
+        if not withdraw_crypto:
+            transaction.try_fixed_count_error += 1
+            transaction.save(failed_error=transaction.failed_error)
+            return 'Retry withdraw'
+        # status to create_for_payment
+        transaction.failed = False
+        transaction.failed_error = None
+        transaction.try_fixed_count_error = 0
+        transaction.status_update()
+        return 'Fixed failed withdraw'

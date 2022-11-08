@@ -266,13 +266,3 @@ class WhiteBitApi(WhiteBitAbstract):
             raise ExchangeTradeError('transfer_to_main_balance failed')
 
         return True
-
-    def start_withdraw(self, amount_received: str, currency_name: str, unique_id: str, address: str, network=None):
-        withdraw_crypto = self.create_withdraw(amount_price=amount_received,
-                                               currency=currency_name,
-                                               unique_id=unique_id,
-                                               address=address,
-                                               network=network)
-
-
-white_bit = WhiteBitInfo()

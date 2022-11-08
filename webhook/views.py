@@ -51,6 +51,7 @@ class WhiteBitWebHook(APIView):
                     amount_price=transaction.amount_received
                 )
                 if not withdraw_crypto:
+                    transaction.failed = True
                     transaction.save(failed_error='not withdraw_crypto')
                     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -89,6 +90,7 @@ class WhiteBitWebHook(APIView):
                     provider=True,
                 )
                 if not withdraw_crypto:
+                    transaction.failed = True
                     transaction.save(failed_error='not withdraw_fiat')
                     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -108,6 +110,7 @@ class WhiteBitWebHook(APIView):
                 transaction.is_confirm = True
                 transaction.failed = False
                 transaction.failed_error = None
+                transaction.try_fixed_count_error = 0
                 transaction.save()
                 send_transaction_satus.delay(email_to=transaction.email,
                                              transaction_id=transaction.unique_id,
