@@ -13,10 +13,8 @@ from exchanger.exchange_exceptions import ExchangeAmountMinMaxError
 
 class WhiteBitAbstract:
     def __init__(self):
-        # self.api_key = settings.WHITEBIT_API_KEY
-        self.api_key = '88ba423355f18bf67fb7dea3f746bf2a'
-        # self.secret_key = settings.WHITEBIT_SECRET_KEY
-        self.secret_key = '44d2c4c196e1fa0518cc58da27daea03'
+        self.api_key = settings.WHITEBIT_API_KEY
+        self.secret_key = settings.WHITEBIT_SECRET_KEY
         self.base_url = 'https://whitebit.com'
 
 
