@@ -14,6 +14,47 @@ class Currency(models.Model):
     network = models.CharField(max_length=10, null=True, blank=True)
     name_from_white_bit = models.CharField(max_length=50, null=True, blank=True)
     image_icon = models.ImageField(upload_to='currency_images/%Y/%m/%d/', null=True, max_length=255)
+    fiat = models.BooleanField(default=False)
+    min_withdraw = models.DecimalField(default=0.1, validators=[MinValueValidator(0), ],
+                                       max_digits=60, decimal_places=30)
+    max_withdraw = models.DecimalField(default=1000, validators=[MinValueValidator(0), ],
+                                       max_digits=60, decimal_places=30)
+    min_deposit = models.DecimalField(default=0.1, validators=[MinValueValidator(0), ],
+                                      max_digits=60, decimal_places=30)
+    max_deposit = models.DecimalField(default=1000, validators=[MinValueValidator(0), ],
+                                      max_digits=60, decimal_places=30)
+    network_for_min_max = models.CharField(max_length=10, null=True, blank=True)
+
+    @classmethod
+    def update_min_max_value(cls, assets_dict: dict):
+
+        queryset = cls.objects.all()
+        for currency in queryset:
+            currency_dict = assets_dict.get(currency.name_from_white_bit)
+            if not currency_dict:
+                continue
+
+            min_withdraw = currency_dict['limits']['withdraw'][currency.network_for_min_max].get('min')
+            max_withdraw = currency_dict['limits']['withdraw'][currency.network_for_min_max].get('max')
+            min_deposit = currency_dict['limits']['deposit'][currency.network_for_min_max].get('min')
+            max_deposit = currency_dict['limits']['deposit'][currency.network_for_min_max].get('max')
+
+            if min_withdraw and Decimal(min_withdraw) >= 0:
+                currency.min_withdraw = Decimal(min_withdraw)
+
+            if max_withdraw and Decimal(max_withdraw) > 0:
+                currency.max_withdraw = Decimal(max_withdraw)
+            else:
+                currency.max_withdraw = Decimal(1000000.00)
+            if min_deposit and Decimal(min_deposit) >= 0:
+                currency.min_deposit = Decimal(min_deposit)
+
+            if max_deposit and Decimal(max_deposit) > 0:
+                currency.max_deposit = Decimal(max_deposit)
+            else:
+                currency.max_deposit = Decimal(1000000.00)
+            currency.save()
+        return queryset
 
     class Meta:
         verbose_name = 'Currency'
@@ -34,26 +75,70 @@ class ExchangeRates(models.Model):
     currency_right = models.ForeignKey(Currency, related_name='exchange_right', on_delete=models.CASCADE)
     value_left = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30)
     value_right = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30)
-    min_value = models.DecimalField(default=1000.00, validators=[MinValueValidator(0), ],
-                                    max_digits=60, decimal_places=30)
-    max_value = models.DecimalField(default=100000.00, validators=[MinValueValidator(0), ],
-                                    max_digits=60, decimal_places=30)
+
     service_commission = models.DecimalField(default=0.005, validators=[MinValueValidator(0), ],
                                              max_digits=5, decimal_places=4)
-    blockchain_commission = models.DecimalField(default=0.001, validators=[MinValueValidator(0), ],
+    blockchain_commission = models.DecimalField(default=0.01, validators=[MinValueValidator(0), ],
                                                 max_digits=5, decimal_places=4)
 
     class Meta:
         verbose_name = 'Exchange Rates'
         verbose_name_plural = 'Exchange Rates'
 
+    @property
+    def min_value(self):
+        return self.currency_left.min_deposit
+
+    @property
+    def max_value(self):
+        if self.value_left <= self.value_right:
+            max_right = self.currency_right.max_withdraw / self.value_right
+        else:
+            max_right = self.currency_right.max_withdraw / self.value_left
+
+        if max_right < self.currency_left.max_deposit:
+            return max_right
+        return self.currency_left.max_deposit
+
+    @property
+    def market(self):
+        return f'{self.currency_left.name_from_white_bit}_{self.currency_right.name_from_white_bit}'
+
+    @property
+    def fiat_market(self):
+        return f'{self.currency_right.name_from_white_bit}_{self.currency_left.name_from_white_bit}'
+
+    @classmethod
+    def update_rates(cls, tickers_list: list):
+        if not tickers_list:
+            return
+        exchange_rates = cls.objects.all().prefetch_related('currency_left', 'currency_right')
+        for pair in exchange_rates:
+            for ticker in tickers_list:
+                if pair.currency_left.fiat and ticker.get('tradingPairs') == pair.fiat_market:
+                    pair.value_left = 1
+                    last_price = Decimal(ticker.get('lastPrice'))
+                    pair.value_right = Decimal(1 / last_price)
+                elif ticker.get('tradingPairs') == pair.market:
+                    pair.value_left = Decimal(ticker.get('lastPrice'))
+                    pair.value_right = 1
+            pair.save()
+        return exchange_rates
+
     def __str__(self):
         return f"{self.currency_left} -> {self.currency_right}"
 
-    def get_price_validation(self, price_left: Decimal):
-        if price_left < self.min_value:
+    def get_price_validation(self, price_exchange: Decimal):
+
+        if price_exchange < self.currency_left.min_deposit:
             return False
-        if price_left > self.max_value:
+        if price_exchange > self.currency_left.max_deposit:
+            return False
+
+        price_right = Decimal(price_exchange) * self.value_right
+        if price_right < self.currency_left.min_withdraw:
+            return False
+        if price_right > self.currency_left.max_withdraw:
             return False
         return True
 

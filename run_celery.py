@@ -10,6 +10,6 @@ if __name__ == "__main__":
         '--without-heartbeat',
         '--without-mingle',
         '--without-gossip',
-        '--queues=celery_tasks'
+        '--queues=celery_tasks,update_rates'
     ]
     app.worker_main(argv)

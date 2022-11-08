@@ -16,6 +16,9 @@ config = {
         'celery_tasks.tasks.send_transaction_satus': {
             'queue': 'celery_tasks'
         },
+        'celery_tasks.tasks.update_exchange_rates': {
+            'queue': 'update_rates'
+        },
 
     },
     'accept_content': ['json', 'application/x-python-serialize'],

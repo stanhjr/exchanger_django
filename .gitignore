@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+media/actions_images
+media/currency_images
+media/logo_images
+media/myphoto
+media/posts_images
 # Distribution / packaging
 .idea
 test.py

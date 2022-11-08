@@ -9,16 +9,38 @@ import requests
 from django.conf import settings
 
 from exchanger.exchange_exceptions import ExchangeAmountMinMaxError
-from exchanger.models import Transactions
 
 
-class WhiteBitApi:
+class WhiteBitAbstract:
     def __init__(self):
         # self.api_key = settings.WHITEBIT_API_KEY
         self.api_key = '88ba423355f18bf67fb7dea3f746bf2a'
         # self.secret_key = settings.WHITEBIT_SECRET_KEY
         self.secret_key = '44d2c4c196e1fa0518cc58da27daea03'
         self.base_url = 'https://whitebit.com'
+
+
+class WhiteBitInfo(WhiteBitAbstract):
+
+    def get_info(self):
+        """DEPRECATED"""
+        request_url = '/api/v4/public/fee'
+        response = requests.get(url=self.base_url + request_url)
+        return response.json()
+
+    def get_tickers_list(self) -> list:
+        request_url = '/api/v2/public/ticker'
+        response = requests.get(url=self.base_url + request_url)
+        result = response.json()
+        return result.get('result')
+
+    def get_assets_dict(self) -> dict:
+        request_url = '/api/v4/public/assets'
+        response = requests.get(url=self.base_url + request_url)
+        return response.json()
+
+
+class WhiteBitApi(WhiteBitAbstract):
 
     @property
     def __nonce(self):
@@ -79,11 +101,6 @@ class WhiteBitApi:
             "nonce": self.__nonce,
         }
         result = self.__get_response_dict(data=data, complete_url=self.base_url + request_url)
-
-    def get_info(self):
-        request_url = '/api/v4/public/fee'
-        response = requests.get(url=self.base_url + request_url)
-        return response.json()
 
     def create_withdraw_crypto(self, amount_price: Decimal, currency: str, address: str, unique_id: str, network: str):
 
@@ -186,7 +203,7 @@ class WhiteBitApi:
         result_dict = response.json()
         return result_dict.get(white_bit_currency_name)
 
-    def start_exchange_fiat_to_crypto(self, transaction_obj: Transactions):
+    def start_exchange_fiat_to_crypto(self, transaction_obj):
         # TODO WEBHOOK, VALIDATION and etc
         # payment expected
         transaction_obj.status_update()
@@ -215,6 +232,4 @@ class WhiteBitApi:
             transaction_obj.status_update()
 
 
-white_bit = WhiteBitApi()
-result = white_bit.get_info_for_crypto('BTC')
-print(white_bit.get_commission_to_withdraw('ETH (ERC20)', 0.1))
+white_bit = WhiteBitInfo()

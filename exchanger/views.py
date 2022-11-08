@@ -16,6 +16,7 @@ from exchanger.serializers import TransactionsSerializerResponse
 from exchanger.serializers import ExchangeSerializer
 from exchanger.serializers import TransactionsSerializer
 from exchanger.serializers import CurrencySerializer
+from exchanger.whitebit_api import WhiteBitApi, WhiteBitInfo
 
 
 class CurrencyListView(generics.ListAPIView):
@@ -42,7 +43,7 @@ class ExchangeCalculateView(views.APIView):
             pairs_model = ExchangeRates.objects.filter(id=serializer.data.get("pairs_id")).first()
             if not pairs_model:
                 return Response({'detail': 'not found pairs'}, status=404)
-            if not pairs_model.get_price_validation(price_left=serializer.data.get("price")):
+            if not pairs_model.get_price_validation(price_exchange=serializer.data.get("price")):
                 return Response({"message": "value is greater or less than allowed values"}, status=400)
             return Response({'value': pairs_model.get_info_calculate(serializer.data.get("price"))}, status=200)
 

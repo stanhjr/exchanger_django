@@ -32,6 +32,11 @@ def generate_key() -> str:
     return binascii.hexlify(os.urandom(20)).decode()
 
 
+@app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(10.0, update_exchange_rates.s(), name='update_exchange_rates')
+
+
 @app.task
 def send_registration_link_to_email(code: str, email_to: str, subject: str):
 
@@ -40,8 +45,6 @@ def send_registration_link_to_email(code: str, email_to: str, subject: str):
     How are you?
     This is your registration link:
     {settings.HOST}/account/account-activate/?code=4641cb74c97b79fa0f7ed9158a6f0e69b7f8d3b3"""
-
-
 
     message = MIMEMultipart("alternative")
     message["Subject"] = subject
@@ -183,3 +186,11 @@ def send_transaction_satus(transaction_id: str, email_to: str, transaction_statu
         print("Something went wrong….", ex)
 
 
+@app.task
+def update_exchange_rates():
+    from exchanger.models import ExchangeRates, Currency
+    from exchanger.whitebit_api import WhiteBitInfo
+    white_bit = WhiteBitInfo()
+    Currency.update_min_max_value(assets_dict=white_bit.get_assets_dict())
+    ExchangeRates.update_rates(tickers_list=white_bit.get_tickers_list())
+    return "currency and exchange rates updates"
