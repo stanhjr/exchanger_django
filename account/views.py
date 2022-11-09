@@ -24,13 +24,16 @@ from account.serializers import (
     ChangeTwoFactorSerializer,
     ChangeEmailSerializer,
     LoginWithTwoAuthCodeSerializer, ResetPasswordWithCodeSerializer, CustomTokenRefreshSerializer,
+    SignUpConfirmSerializer,
 )
 
-from celery_tasks.tasks import generate_key, send_verify_code_to_email, send_reset_password_code_to_email
-from celery_tasks.tasks import send_reset_password_link_to_email
+from celery_tasks.tasks import (
+    generate_key,
+    send_verify_code_to_email,
+    send_reset_password_code_to_email
+)
 from celery_tasks.tasks import send_registration_link_to_email
 from exchanger.models import Transactions
-from exchanger_django.settings import HOST
 
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
@@ -100,39 +103,29 @@ class UserViewSet(viewsets.ModelViewSet):
         return self.retrieve(request, *args, **kwargs)
 
 
-class ResetPassword(RedirectView):
-    def dispatch(self, request, *args, **kwargs):
-        user_email = self.request.GET.get("email")
-        if not user_email:
-            return redirect('home')
-        user = CustomUser.objects.filter(email=user_email).first()
-
-        if user:
-            code = generate_key()
-            user.reset_password_code = code
-            user.save()
-            send_reset_password_link_to_email.delay(code=code,
-                                                    subject="Reset Password",
-                                                    email_to=user_email)
-            redirect(HOST)
-
-        return redirect(HOST)
+class SignUpConfirm(TokenObtainPairView):
+    serializer_class = SignUpConfirmSerializer
+    model = CustomUser
 
 
-class SignUpConfirm(RedirectView):
+class ResetPasswordWithCodeView(UpdateAPIView):
+    serializer_class = ResetPasswordWithCodeSerializer
+    model = CustomUser
 
-    def dispatch(self, request, *args, **kwargs):
-        code = self.request.GET.get("code")
-        if not code:
-            return redirect(HOST)
-        user = CustomUser.objects.filter(verify_code=code).first()
-        if user:
-            user.verify_code = ''
-            user.is_confirmed = True
-            user.save()
-            return redirect(HOST)
-        else:
-            return redirect(HOST)
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            response = {
+                'status': 'success',
+                'code': status.HTTP_200_OK,
+                'message': 'Password updated successfully',
+                'data': []
+            }
+
+            return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(TokenObtainPairView):
@@ -222,7 +215,6 @@ class ResetPasswordWithCodeView(UpdateAPIView):
     model = CustomUser
 
     def update(self, request, *args, **kwargs):
-
         serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():

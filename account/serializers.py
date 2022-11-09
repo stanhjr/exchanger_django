@@ -179,3 +179,35 @@ class ChangeEmailSerializer(serializers.Serializer):
     """
     old_email = serializers.EmailField(required=True)
     new_email = serializers.EmailField(required=True)
+
+
+class SignUpConfirmSerializer(serializers.Serializer):
+
+    default_error_messages = {
+        'not_valid_code': _('not_valid_code'),
+
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['code'] = serializers.CharField(required=True, min_length=15)
+
+    def validate(self, attrs):
+        code = attrs.get('code')
+        user = CustomUser.objects.filter(verify_code=code).first()
+        if not user:
+            raise AuthenticationFailed(
+                self.default_error_messages['not_valid_code'],
+                'no_active_account',
+            )
+
+        user.verify_code = ''
+        user.save()
+
+        refresh = TokenObtainPairSerializer.get_token(user)
+        data = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+        data.update({'user': GetUserSerializer(instance=user).data})
+        return data

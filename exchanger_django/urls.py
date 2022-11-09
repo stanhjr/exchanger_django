@@ -26,7 +26,8 @@ urlpatterns = [
     path('account/', include('account.urls')),
     path('blog/', include('blog.urls')),
     path('important_info/', include('important_info.urls')),
-    path('exchanger/', include('exchanger.urls'))
+    path('exchanger/', include('exchanger.urls')),
+    path('webhook/', include('webhook.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += doc_urls
