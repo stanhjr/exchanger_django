@@ -211,3 +211,10 @@ class SignUpConfirmSerializer(serializers.Serializer):
         }
         data.update({'user': GetUserSerializer(instance=user).data})
         return data
+
+
+class UserTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transactions
+        fields = ['transaction_date', 'status', 'currency_exchange', 'currency_received',
+                  'amount_exchange', 'amount_received', 'created_at', 'address']

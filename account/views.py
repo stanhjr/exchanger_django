@@ -1,10 +1,9 @@
 from decimal import Decimal
 
-from django.shortcuts import redirect
-from django.views.generic import RedirectView
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, viewsets, status, views
 from rest_framework.generics import CreateAPIView, UpdateAPIView
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -24,7 +23,7 @@ from account.serializers import (
     ChangeTwoFactorSerializer,
     ChangeEmailSerializer,
     LoginWithTwoAuthCodeSerializer, ResetPasswordWithCodeSerializer, CustomTokenRefreshSerializer,
-    SignUpConfirmSerializer,
+    SignUpConfirmSerializer, UserTransactionSerializer,
 )
 
 from celery_tasks.tasks import (
@@ -36,6 +35,8 @@ from celery_tasks.tasks import send_registration_link_to_email
 from exchanger.models import Transactions
 
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+
+from exchanger.pagination import CustomPaginator
 
 
 class SignUpApi(CreateAPIView):
@@ -315,3 +316,19 @@ class ChangeEmailView(UpdateAPIView):
             return Response(response)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserTransactions(viewsets.ModelViewSet):
+    queryset = Transactions.objects.all()
+    serializer_class = UserTransactionSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = CustomPaginator
+
+    def get_queryset(self):
+        return Transactions.objects.filter(user=self.request.user).all()
+
+    def get_object(self):
+        return self.request.user
+
+    def list(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
