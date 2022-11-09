@@ -18,11 +18,24 @@ class WhiteBitAbstract:
         self.secret_key = settings.WHITEBIT_SECRET_KEY
         self.base_url = 'https://whitebit.com'
 
+    def get_info_for_crypto(self, white_bit_currency_name: str, network: str) -> dict:
+        """
+        Takes white_bit_currency_name and network    BTC, USDT (TRC20), ETH (ERC20)
+        returned info for currency
+        :param network:
+        :param white_bit_currency_name:
+        :return:
+        """
+        request_url = '/api/v4/public/fee'
+        response = requests.get(url=self.base_url + request_url)
+        result_dict = response.json()
+        currency_name = f"{white_bit_currency_name} ({network})" if network else white_bit_currency_name
+        return result_dict.get(currency_name)
+
 
 class WhiteBitInfo(WhiteBitAbstract):
 
     def get_info(self):
-        """DEPRECATED"""
         request_url = '/api/v4/public/fee'
         response = requests.get(url=self.base_url + request_url)
         return response.json()
@@ -176,24 +189,6 @@ class WhiteBitApi(WhiteBitAbstract):
         result = self.__get_response_dict(data=data, complete_url=self.base_url + request_url)
         return result.get("url")
 
-    def get_commission_to_deposit(self, white_bit_currency_name: str, amount_price: Decimal):
-        """
-        DEPRECATED
-        :param white_bit_currency_name:
-        :param amount_price:
-        :return:
-        """
-        info_for_crypto = self.get_info_for_crypto(white_bit_currency_name)
-        min_amount = float(info_for_crypto['deposit']['min_amount'])
-        max_amount = float(info_for_crypto['deposit']['max_amount'])
-        if float(amount_price) < min_amount:
-            return
-        if float(amount_price) > max_amount and max_amount:
-            return
-        if not info_for_crypto['deposit']['fixed']:
-            return 0
-        return Decimal(info_for_crypto['deposit']['fixed'])
-
     def __check_to_deposit(self, white_bit_currency_name: str, amount_price: Decimal, network: str):
         info_for_crypto = self.get_info_for_crypto(white_bit_currency_name, network=network)
         min_amount = float(info_for_crypto['deposit']['min_amount'])
@@ -215,20 +210,6 @@ class WhiteBitApi(WhiteBitAbstract):
         if not info_for_crypto['withdraw']['fixed']:
             return 0
         return Decimal(info_for_crypto['withdraw']['fixed'])
-
-    def get_info_for_crypto(self, white_bit_currency_name: str, network: str) -> dict:
-        """
-        Takes white_bit_currency_name and network    BTC, USDT (TRC20), ETH (ERC20)
-        returned info for currency
-        :param network:
-        :param white_bit_currency_name:
-        :return:
-        """
-        request_url = '/api/v4/public/fee'
-        response = requests.get(url=self.base_url + request_url)
-        result_dict = response.json()
-        currency_name = f"{white_bit_currency_name} ({network})" if network else white_bit_currency_name
-        return result_dict.get(currency_name)
 
     def start_trading(self, unique_id: str, name_from_white_bit_exchange: str, name_from_white_bit_received: str,
                       market: str, amount_received: str, amount_exchange: str):
@@ -253,15 +234,18 @@ class WhiteBitApi(WhiteBitAbstract):
         if status_code > 210:
             raise ExchangeTradeError('transfer_to_trade_balance failed')
 
+        time.sleep(1)
         status_code = self.create_stock_market(amount_price=amount_received,
                                                market=market,
                                                client_order_id=client_order_id)
         if status_code > 210:
             raise ExchangeTradeError('create_stock_market')
 
+        time.sleep(1)
         status_code = self.__transfer_to_main_balance(currency=name_from_white_bit_received,
                                                       amount_price=amount_received)
 
+        time.sleep(1)
         if status_code > 210:
             raise ExchangeTradeError('transfer_to_main_balance failed')
 

@@ -24,6 +24,10 @@ class Currency(models.Model):
     max_deposit = models.DecimalField(default=1000, validators=[MinValueValidator(0), ],
                                       max_digits=60, decimal_places=30)
     network_for_min_max = models.CharField(max_length=10, null=True, blank=True)
+    commission_deposit = models.DecimalField(validators=[MinValueValidator(0), ],
+                                             max_digits=25, decimal_places=15, null=True)
+    commission_withdraw = models.DecimalField(validators=[MinValueValidator(0), ],
+                                              max_digits=25, decimal_places=15, null=True)
 
     @classmethod
     def update_min_max_value(cls, assets_dict: dict):
@@ -56,6 +60,20 @@ class Currency(models.Model):
             currency.save()
         return queryset
 
+    @classmethod
+    def update_commission(cls, info_dict: dict):
+        queryset = cls.objects.all()
+        for currency in queryset:
+            currency_info = info_dict.get(currency.name_for_update_commission)
+            if not currency.fiat:
+                currency.commission_deposit = currency_info['deposit']['fixed']
+                currency.commission_withdraw = currency_info['withdraw']['fixed']
+            else:
+                currency.commission_deposit = currency_info['deposit'][currency.ticker_fiat_for_update_commission]['fixed']
+                currency.commission_withdraw = currency_info['withdraw'][currency.ticker_fiat_for_update_commission]['fixed']
+            currency.save()
+        return queryset
+
     class Meta:
         verbose_name = 'Currency'
         verbose_name_plural = 'Currency'
@@ -68,6 +86,23 @@ class Currency(models.Model):
         if self.network:
             return f'{self.name_from_white_bit} ({self.network})'
         return self.name_from_white_bit
+
+    @property
+    def name_for_update_commission(self) -> str:
+        """
+        Returned name for update commission only
+        :return:
+        """
+        return f"{self.name_from_white_bit} ({self.network})" if self.network else self.name_from_white_bit
+
+    @property
+    def ticker_fiat_for_update_commission(self) -> str:
+        """
+        Returned ticker for update commission only
+        FOR UAH ONLY
+        :return:
+        """
+        return f'{self.name_from_white_bit}_{self.network_for_min_max}'
 
 
 class ExchangeRates(models.Model):
@@ -135,16 +170,11 @@ class ExchangeRates(models.Model):
 
     def get_price_validation(self, price_exchange: Decimal):
 
-        if price_exchange < self.currency_left.min_deposit:
+        if price_exchange < self.min_value:
             return False
-        if price_exchange > self.currency_left.max_deposit:
+        if price_exchange > self.max_value:
             return False
 
-        price_right = Decimal(price_exchange) * self.value_right
-        if price_right < self.currency_left.min_withdraw:
-            return False
-        if price_right > self.currency_left.max_withdraw:
-            return False
         return True
 
     def get_calculate(self, price_left: Decimal):

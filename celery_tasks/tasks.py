@@ -194,6 +194,7 @@ def update_exchange_rates():
     from exchanger.whitebit_api import WhiteBitInfo
     white_bit = WhiteBitInfo()
     Currency.update_min_max_value(assets_dict=white_bit.get_assets_dict())
+    Currency.update_commission(white_bit.get_info())
     ExchangeRates.update_rates(tickers_list=white_bit.get_tickers_list())
     return "currency and exchange rates updates"
 
