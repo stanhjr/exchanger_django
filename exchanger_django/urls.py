@@ -19,6 +19,7 @@ from django.urls import include
 from django.conf.urls.static import static
 from django.conf import settings
 
+from webhook.views import WhiteBitVerify
 from .yasg import url_patterns as doc_urls
 
 urlpatterns = [
@@ -28,6 +29,7 @@ urlpatterns = [
     path('important_info/', include('important_info.urls')),
     path('exchanger/', include('exchanger.urls')),
     path('webhook/', include('webhook.urls')),
+    path('whiteBIT-verification/', WhiteBitVerify.as_view(), name='whiteBIT-verification'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += doc_urls

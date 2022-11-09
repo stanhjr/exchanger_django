@@ -233,7 +233,7 @@ EMAIL_HOST_USER = str(os.getenv('EMAIL_HOST_USER'))
 
 EMAIL_HOST_PASSWORD = str(os.getenv('EMAIL_HOST_PASSWORD'))
 CELERY_SEND_MAIL_HOST = str(os.getenv('CELERY_SEND_MAIL_HOST'))
-WHITEBIT_API_KEY = str(os.getenv('WHITEBIT_API_KEY '))
+WHITEBIT_API_KEY = str(os.getenv('WHITEBIT_API_KEY'))
 WHITEBIT_SECRET_KEY = str(os.getenv('WHITEBIT_SECRET_KEY'))
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration

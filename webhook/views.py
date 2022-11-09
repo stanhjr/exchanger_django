@@ -124,3 +124,10 @@ class WhiteBitWebHook(APIView):
 
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class WhiteBitVerify(APIView):
+
+    def get(self, request):
+        print(settings.WHITEBIT_API_KEY)
+        return Response([settings.WHITEBIT_API_KEY], status=status.HTTP_200_OK)
