@@ -93,15 +93,14 @@ class ExchangeRates(models.Model):
 
     @property
     def min_value(self):
+        min_right = self.currency_right.min_withdraw / self.value_right
+        if min_right > self.currency_left.min_deposit:
+            return Decimal(min_right)
         return Decimal(self.currency_left.min_deposit)
 
     @property
     def max_value(self):
-        if self.value_left <= self.value_right:
-            max_right = self.currency_right.max_withdraw / self.value_right
-        else:
-            max_right = self.currency_right.max_withdraw / self.value_left
-
+        max_right = self.currency_right.max_withdraw / self.value_right
         if max_right < self.currency_left.max_deposit:
             return Decimal(max_right)
         return Decimal(self.currency_left.max_deposit)
@@ -126,8 +125,8 @@ class ExchangeRates(models.Model):
                     last_price = Decimal(ticker.get('lastPrice'))
                     pair.value_right = Decimal(1 / last_price)
                 elif ticker.get('tradingPairs') == pair.market:
-                    pair.value_left = Decimal(ticker.get('lastPrice'))
-                    pair.value_right = 1
+                    pair.value_left = 1
+                    pair.value_right = Decimal(ticker.get('lastPrice'))
             pair.save()
         return exchange_rates
 

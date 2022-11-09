@@ -30,7 +30,6 @@ urlpatterns = [
     path('exchanger/', include('exchanger.urls')),
     path('webhook/', include('webhook.urls')),
     path('whiteBIT-verification/', WhiteBitVerify.as_view(), name='whiteBIT-verification'),
-    path('check-wb-webhooks/', WhiteBitVerify.as_view(), name='check-wb-webhooks')
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += doc_urls
