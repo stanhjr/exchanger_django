@@ -15,7 +15,7 @@ class WhiteBitWebHook(APIView):
 
     def post(self, request, format=None, send_transaction_satus=None):
         print(1)
-        if request.META['X-TXC-APIKEY'] != settings.WHITEBIT_API_KEY:
+        if request.META['X-TXC-APIKEY'] != settings.WHITEBIT_WEB_HOOK_PRIVAT_KEY:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         serializer = WhiteBitSerializer(data=request.data)
@@ -129,5 +129,4 @@ class WhiteBitWebHook(APIView):
 class WhiteBitVerify(APIView):
 
     def get(self, request):
-        print(settings.WHITEBIT_API_KEY)
-        return Response([settings.WHITEBIT_API_KEY], status=status.HTTP_200_OK)
+        return Response([settings.WHITEBIT_WEB_HOOK_PUBLIC_KEY], status=status.HTTP_200_OK)
