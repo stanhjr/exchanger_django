@@ -11,15 +11,20 @@ from webhook.serializers import WhiteBitSerializer
 
 class WhiteBitWebHook(APIView):
     white_bit_api = WhiteBitApi()
+    http_method_names = ['post', ]
 
     def post(self, request, format=None, send_transaction_satus=None):
+        print(1)
         if request.META['X-TXC-APIKEY'] != settings.WHITEBIT_API_KEY:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         serializer = WhiteBitSerializer(data=request.data)
+        print(2)
         if serializer.is_valid():
             method = serializer.validated_data.get("method")
             params = serializer.validated_data.get("params")
+            print(method)
+            print(params)
             unique_id = params.get("uniqueId")
             wallet_address = params.get("address")
             if method == 'deposit.processed' and unique_id:
