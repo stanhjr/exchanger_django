@@ -5,11 +5,14 @@ from exchanger.models import ExchangeRates
 from exchanger.models import Transactions
 from exchanger.models import ProfitTotal
 from exchanger.models import ProfitModel
+from exchanger.models import Commissions
+
 
 admin.site.register(Currency)
 admin.site.register(ExchangeRates)
 admin.site.register(ProfitTotal)
 admin.site.register(ProfitModel)
+admin.site.register(Commissions)
 
 
 @admin.register(Transactions)

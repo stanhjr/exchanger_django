@@ -7,6 +7,7 @@ from django.db import models
 from django.utils import timezone
 from account.models import CustomUser
 from celery_tasks.tasks import send_transaction_satus
+from exchanger.tools import value_to_dollars
 
 
 class Currency(models.Model):
@@ -66,11 +67,13 @@ class Currency(models.Model):
         for currency in queryset:
             currency_info = info_dict.get(currency.name_for_update_commission)
             if not currency.fiat:
-                currency.commission_deposit = currency_info['deposit']['fixed']
-                currency.commission_withdraw = currency_info['withdraw']['fixed']
+                currency.commission_deposit = currency_info['deposit'].get('fixed', 0)
+                currency.commission_withdraw = currency_info['withdraw'].get('fixed', 0)
             else:
-                currency.commission_deposit = currency_info['deposit'][currency.ticker_fiat_for_update_commission]['fixed']
-                currency.commission_withdraw = currency_info['withdraw'][currency.ticker_fiat_for_update_commission]['fixed']
+                currency.commission_deposit = currency_info['deposit'][currency.ticker_fiat_for_update_commission].get(
+                    'fixed', 0)
+                currency.commission_withdraw = currency_info['withdraw'][
+                    currency.ticker_fiat_for_update_commission].get('fixed', 0)
             currency.save()
         return queryset
 
@@ -110,11 +113,6 @@ class ExchangeRates(models.Model):
     currency_right = models.ForeignKey(Currency, related_name='exchange_right', on_delete=models.CASCADE)
     value_left = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30)
     value_right = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30)
-
-    service_commission = models.DecimalField(default=0.005, validators=[MinValueValidator(0), ],
-                                             max_digits=5, decimal_places=4)
-    blockchain_commission = models.DecimalField(default=0.01, validators=[MinValueValidator(0), ],
-                                                max_digits=5, decimal_places=4)
 
     class Meta:
         verbose_name = 'Exchange Rates'
@@ -177,19 +175,25 @@ class ExchangeRates(models.Model):
 
         return True
 
+    def get_trade(self, price_left: Decimal):
+        return Decimal(price_left) * (self.value_left * self.value_right)
+
     def get_calculate(self, price_left: Decimal):
+        commissions = Commissions.objects.first()
         value_without_commission = Decimal(price_left) * (self.value_left * self.value_right)
-        service_commission = value_without_commission * self.service_commission
-        blockchain_commission = value_without_commission * self.blockchain_commission
-        result = value_without_commission - service_commission - blockchain_commission
+        service_commission = value_without_commission * commissions.service_commission / 100 + self.currency_right.commission_withdraw
+        white_bit_commission = value_without_commission * commissions.white_bit_commission / 100
+        result = value_without_commission - service_commission - white_bit_commission
         return result.quantize(Decimal("1.0000"))
 
     def get_info_calculate(self, price_left: Decimal):
-        service_commission = Decimal(price_left) * self.service_commission
-        blockchain_commission = Decimal(price_left) * self.blockchain_commission
+        commissions = Commissions.objects.first()
+        service_commission = Decimal(price_left) * commissions.service_commission / 100 + self.currency_right.commission_withdraw
+        white_bit_commission = Decimal(price_left) * commissions.white_bit_commission / 100
+        print(value_to_dollars(service_commission, self.currency_right.name_from_white_bit))
         return {"value": self.get_calculate(price_left),
-                "service_commission": service_commission,
-                "blockchain_commission": blockchain_commission}
+                "service_commission": value_to_dollars(service_commission, self.currency_right.name_from_white_bit),
+                "blockchain_commission": value_to_dollars(white_bit_commission, self.currency_right.name_from_white_bit)}
 
     def clean(self):
         if self.value_right <= 0 or self.value_left <= 0:
@@ -317,25 +321,13 @@ class Transactions(models.Model):
         if not currency_usdt or not currency_uah:
             raise ValidationError
 
-        currency_left = None
-        value_uah = 0
-        if self.currency_exchange == currency_uah:
-            currency_left = exchange_pair.currency_left
-            value_uah = self.amount_exchange
-        if self.currency_received == currency_uah:
-            currency_left = exchange_pair.currency_right
-            value_uah = self.amount_received
-        if currency_left is None:
-            raise ValidationError
-
-        exchange_pair = ExchangeRates.objects.filter(currency_left=currency_left,
-                                                     currency_right=currency_usdt).first()
-        self.reference_dollars = exchange_pair.get_calculate(value_uah)
+        self.reference_dollars = value_to_dollars(
+            amount_exchange=self.amount_exchange,
+            currency_white_bit_name=exchange_pair.currency_left.name_from_white_bit)
         if not self.user:
             return super().save(*args, **kwargs)
 
         self.currency_exchange = self.currency_exchange - self.user.get_percent_profit_price(self.currency_exchange)
-        # TODO APPROVE
 
         return super().save(*args, **kwargs)
 
@@ -385,3 +377,11 @@ class ProfitModel(models.Model):
 
     class Meta:
         ordering = ('price_dollars',)
+
+
+class Commissions(models.Model):
+    white_bit_commission = models.DecimalField(max_digits=4, decimal_places=2)
+    service_commission = models.DecimalField(max_digits=4, decimal_places=2)
+
+    def __str__(self):
+        return f'white_bit_commission {self.white_bit_commission}%  service_commission {self.service_commission}%'
