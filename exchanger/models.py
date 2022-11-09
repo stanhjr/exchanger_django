@@ -61,7 +61,9 @@ class Currency(models.Model):
         verbose_name_plural = 'Currency'
 
     def __str__(self):
-        return self.name_from_white_bit
+        # return self.name_from_white_bit
+
+        return self.name
 
     @property
     def name_with_protocol(self):
