@@ -63,9 +63,7 @@ class CustomUser(AbstractUser):
                    transactions__created_at__month=month_number). \
             aggregate(Sum('transactions__reference_dollars'))
 
-        if not invited_users.get('transactions__reference_dollars__sum'):
-            return 0
-        return invited_users.get('transactions__reference_dollars__sum')
+        return invited_users.get('transactions__reference_dollars__sum', 0)
 
     @property
     def counts_of_referral(self):

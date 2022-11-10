@@ -359,12 +359,14 @@ class ProfitModel(models.Model):
 
     @classmethod
     def __get_profit_percent(cls, price_dollars: Decimal) -> Decimal:
+        """DEPRECATED"""
         model = cls.objects.filter(price_dollars__lte=price_dollars).first()
         if model:
             return model.profit_percent
 
     @classmethod
     def get_discount(cls, price: Decimal, currency: str):
+        """DEPRECATED"""
         redis_cache.cache_exchange_rates()
         if currency != 'USDT':
             price_model = ExchangeRates.objects.filter(currency_left=currency, currency_right='USD').first()
