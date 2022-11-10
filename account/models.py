@@ -75,9 +75,7 @@ class CustomUser(AbstractUser):
             prefetch_related('transactions').filter(transactions__is_confirm=True).\
             aggregate(Sum('transactions__reference_dollars'))
 
-        if not invited_users.get('transactions__reference_dollars__sum'):
-            return 0
-        return invited_users.get('transactions__reference_dollars__sum')
+        return invited_users.get('transactions__reference_dollars__sum', 0)
 
     @property
     def sum_refers_eq_usdt(self) -> int:
