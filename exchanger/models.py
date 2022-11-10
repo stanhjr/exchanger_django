@@ -242,7 +242,7 @@ class Transactions(models.Model):
         verbose_name_plural = 'Transaction'
         ordering = ['-created_at', 'is_confirm']
 
-    def status_update(self) -> None:
+    def status_update(self, email) -> None:
         status_dict = {
             'created': 'payment_received',
             'payment_received': 'currency_changing',
@@ -253,10 +253,9 @@ class Transactions(models.Model):
         if self.status == status_dict.get(self.status):
             self.status = status_dict.get(self.status)
             self.save(status_update=True)
-        send_transaction_satus.delay(email_to=self.user.email,
+        send_transaction_satus.delay(email_to=self.email,
                                      transaction_id=self.unique_id,
                                      transaction_status=self.status)
-
     @property
     def crypto_to_fiat(self) -> bool:
         if self.currency_received.fiat:
