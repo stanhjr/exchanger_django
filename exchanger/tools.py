@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 
 
 def value_to_dollars(amount_exchange: Decimal, currency_white_bit_name: str) -> Decimal:
-    print(amount_exchange, currency_white_bit_name)
     from exchanger.models import Currency, ExchangeRates
     currency_usdt = Currency.objects.filter(name_from_white_bit='USDT').first()
     currency_uah = Currency.objects.filter(name_from_white_bit='UAH').first()

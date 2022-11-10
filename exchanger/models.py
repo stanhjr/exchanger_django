@@ -151,15 +151,18 @@ class ExchangeRates(models.Model):
         if not tickers_list:
             return
         exchange_rates = cls.objects.all().prefetch_related('currency_left', 'currency_right')
+        commission_obj = Commissions.objects.first()
         for pair in exchange_rates:
             for ticker in tickers_list:
                 if pair.currency_left.fiat and ticker.get('tradingPairs') == pair.fiat_market:
                     pair.value_left = 1
                     last_price = Decimal(ticker.get('lastPrice'))
-                    pair.value_right = Decimal(1 / last_price)
+                    commission = Decimal(1 / last_price) * commission_obj.to_crypto_commission_percent
+                    pair.value_right = Decimal(1 / last_price) + commission
                 elif ticker.get('tradingPairs') == pair.market:
                     pair.value_left = 1
-                    pair.value_right = Decimal(ticker.get('lastPrice'))
+                    commission = Decimal(ticker.get('lastPrice')) * commission_obj.to_fiat_commission_percent
+                    pair.value_right = Decimal(ticker.get('lastPrice')) + commission
             pair.save()
         return exchange_rates
 
@@ -181,18 +184,16 @@ class ExchangeRates(models.Model):
     def get_calculate(self, price_left: Decimal):
         commissions = Commissions.objects.first()
         value_without_commission = Decimal(price_left) * (self.value_left * self.value_right)
-        service_commission = value_without_commission * commissions.service_commission / 100 + self.currency_right.commission_withdraw
-        white_bit_commission = value_without_commission * commissions.white_bit_commission / 100
-        result = value_without_commission - service_commission - white_bit_commission
+        white_bit_commission = value_without_commission * commissions.white_bit_commission_percent + self.currency_right.commission_withdraw
+        result = value_without_commission - white_bit_commission
         return result.quantize(Decimal("1.0000"))
 
     def get_info_calculate(self, price_left: Decimal):
         commissions = Commissions.objects.first()
-        service_commission = Decimal(price_left) * commissions.service_commission / 100 + self.currency_right.commission_withdraw
-        white_bit_commission = Decimal(price_left) * commissions.white_bit_commission / 100
-        print(value_to_dollars(service_commission, self.currency_right.name_from_white_bit))
-        return {"value": self.get_calculate(price_left),
-                "service_commission": value_to_dollars(service_commission, self.currency_right.name_from_white_bit),
+        value_without_commission = Decimal(price_left) * (self.value_left * self.value_right)
+        white_bit_commission = value_without_commission * commissions.white_bit_commission_percent + self.currency_right.commission_withdraw
+        result = value_without_commission - white_bit_commission
+        return {"value": result,
                 "blockchain_commission": value_to_dollars(white_bit_commission, self.currency_right.name_from_white_bit)}
 
     def clean(self):
@@ -380,8 +381,21 @@ class ProfitModel(models.Model):
 
 
 class Commissions(models.Model):
-    white_bit_commission = models.DecimalField(max_digits=4, decimal_places=2)
-    service_commission = models.DecimalField(max_digits=4, decimal_places=2)
+    white_bit_commission = models.DecimalField(max_digits=4, decimal_places=2, default=0.01)
+    service_commission_to_fiat = models.DecimalField(max_digits=4, decimal_places=2, default=0.5)
+    service_commission_to_crypto = models.DecimalField(max_digits=4, decimal_places=2, default=0.5)
 
     def __str__(self):
-        return f'white_bit_commission {self.white_bit_commission}%  service_commission {self.service_commission}%'
+        return f'commissions'
+
+    @property
+    def white_bit_commission_percent(self):
+        return self.white_bit_commission / 100
+
+    @property
+    def to_fiat_commission_percent(self):
+        return self.service_commission_to_fiat / 100
+
+    @property
+    def to_crypto_commission_percent(self):
+        return self.service_commission_to_crypto / 100
