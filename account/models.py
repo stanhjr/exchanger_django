@@ -14,6 +14,7 @@ from django.db import transaction
 
 from django.conf import settings
 
+from exchanger.tools import get_zero_or_none
 from exchanger_django.settings import HOST
 
 
@@ -63,7 +64,7 @@ class CustomUser(AbstractUser):
                    transactions__created_at__month=month_number). \
             aggregate(Sum('transactions__reference_dollars'))
 
-        return invited_users.get('transactions__reference_dollars__sum', 0)
+        return get_zero_or_none(invited_users.get('transactions__reference_dollars__sum'))
 
     @property
     def counts_of_referral(self):
@@ -75,7 +76,7 @@ class CustomUser(AbstractUser):
             prefetch_related('transactions').filter(transactions__is_confirm=True).\
             aggregate(Sum('transactions__reference_dollars'))
 
-        return invited_users.get('transactions__reference_dollars__sum', 0)
+        return get_zero_or_none(invited_users.get('transactions__reference_dollars__sum'))
 
     @property
     def sum_refers_eq_usdt(self) -> int:

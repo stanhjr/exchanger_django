@@ -29,3 +29,9 @@ def value_to_dollars(amount_exchange: Decimal, currency_white_bit_name: str) -> 
         exchange_pair = ExchangeRates.objects.filter(currency_left=currency_uah,
                                                      currency_right=currency_usdt).first()
         return exchange_pair.get_trade(uah)
+
+
+def get_zero_or_none(info):
+    if info is None:
+        return 0
+    return info

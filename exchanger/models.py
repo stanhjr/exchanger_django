@@ -8,7 +8,7 @@ from django.utils import timezone
 from account.models import CustomUser
 from celery_tasks.tasks import send_transaction_satus
 from exchanger.redis_api import redis_cache
-from exchanger.tools import value_to_dollars
+from exchanger.tools import value_to_dollars, get_zero_or_none
 
 
 class Currency(models.Model):
@@ -67,14 +67,16 @@ class Currency(models.Model):
         queryset = cls.objects.all()
         for currency in queryset:
             currency_info = info_dict.get(currency.name_for_update_commission)
+
             if not currency.fiat:
-                currency.commission_deposit = currency_info['deposit'].get('fixed', 0)
-                currency.commission_withdraw = currency_info['withdraw'].get('fixed', 0)
+                currency.commission_deposit = get_zero_or_none(currency_info['deposit'].get('fixed'))
+                currency.commission_withdraw = get_zero_or_none(currency_info['withdraw'].get('fixed'))
             else:
-                currency.commission_deposit = currency_info['deposit'][currency.ticker_fiat_for_update_commission].get(
-                    'fixed', 0)
-                currency.commission_withdraw = currency_info['withdraw'][
-                    currency.ticker_fiat_for_update_commission].get('fixed', 0)
+                currency.commission_deposit = get_zero_or_none(currency_info['deposit'][currency.ticker_fiat_for_update_commission].get(
+                    'fixed'))
+                currency.commission_withdraw = get_zero_or_none(currency_info['withdraw'][
+                    currency.ticker_fiat_for_update_commission].get('fixed'))
+
             currency.save()
         return queryset
 

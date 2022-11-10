@@ -55,10 +55,10 @@ class WhiteBitInfo(WhiteBitAbstract):
 class WhiteBitApi(WhiteBitAbstract):
 
     @property
-    def __nonce(self):
+    def _nonce(self):
         return time.time_ns() // 1_000_000
 
-    def __get_headers(self, data_json: json) -> dict:
+    def _get_headers(self, data_json: json) -> dict:
         payload = base64.b64encode(data_json.encode('ascii'))
         signature = hmac.new(self.secret_key.encode('ascii'), payload, hashlib.sha512).hexdigest()
         return {
@@ -69,22 +69,22 @@ class WhiteBitApi(WhiteBitAbstract):
         }
 
     @staticmethod
-    def __get_data_json(data: dict) -> json:
+    def _get_data_json(data: dict) -> json:
         return json.dumps(data, separators=(',', ':'))
 
-    def __get_response_dict(self, data: dict, complete_url: str) -> dict:
-        data_json = self.__get_data_json(data)
-        headers = self.__get_headers(data_json)
+    def _get_response_dict(self, data: dict, complete_url: str) -> dict:
+        data_json = self._get_data_json(data)
+        headers = self._get_headers(data_json)
         response = requests.post(complete_url, headers=headers, data=data_json)
         return response.json()
 
-    def __get_response_status_code(self, data: dict, complete_url: str) -> int:
-        data_json = self.__get_data_json(data)
-        headers = self.__get_headers(data_json)
+    def _get_response_status_code(self, data: dict, complete_url: str) -> int:
+        data_json = self._get_data_json(data)
+        headers = self._get_headers(data_json)
         response = requests.post(complete_url, headers=headers, data=data_json)
         return response.status_code
 
-    def __transfer_to_trade_balance(self, currency: str, amount_price: str):
+    def _transfer_to_trade_balance(self, currency: str, amount_price: str):
         request_url = '/api/v4/main-account/fiat-deposit-url'
         data = {
             "ticker": currency,
@@ -92,11 +92,11 @@ class WhiteBitApi(WhiteBitAbstract):
             "from": "main",
             "to": "spot",
             "request": request_url,
-            "nonce": self.__nonce
+            "nonce": self._nonce
         }
-        return self.__get_response_status_code(data=data, complete_url=self.base_url + request_url)
+        return self._get_response_status_code(data=data, complete_url=self.base_url + request_url)
 
-    def __transfer_to_main_balance(self, currency: str, amount_price: str) -> int:
+    def _transfer_to_main_balance(self, currency: str, amount_price: str) -> int:
         request_url = '/api/v4/main-account/fiat-deposit-url'
         data = {
             "ticker": currency,
@@ -104,9 +104,9 @@ class WhiteBitApi(WhiteBitAbstract):
             "from": "spot",
             "to": "main",
             "request": request_url,
-            "nonce": self.__nonce
+            "nonce": self._nonce
         }
-        return self.__get_response_status_code(data=data, complete_url=self.base_url + request_url)
+        return self._get_response_status_code(data=data, complete_url=self.base_url + request_url)
 
     def create_stock_market(self, amount_price: str, market: str, client_order_id: str) -> int:
         request_url = '/api/v4/order/stock_market'
@@ -116,9 +116,9 @@ class WhiteBitApi(WhiteBitAbstract):
             "clientOrderId": client_order_id,
             "amount": amount_price,
             "request": request_url,
-            "nonce": self.__nonce,
+            "nonce": self._nonce,
         }
-        return self.__get_response_status_code(data=data, complete_url=self.base_url + request_url)
+        return self._get_response_status_code(data=data, complete_url=self.base_url + request_url)
 
     def create_withdraw(self, amount_price: str, currency: str, address: str, unique_id: str,
                         network: str = None, provider: bool = False):
@@ -130,7 +130,7 @@ class WhiteBitApi(WhiteBitAbstract):
             "address": address,
             "uniqueId": unique_id,
             "request": request_url,
-            "nonce": self.__nonce
+            "nonce": self._nonce
         }
         if network:
             data.update(network=network)
@@ -138,8 +138,8 @@ class WhiteBitApi(WhiteBitAbstract):
             data.pop("network")
             data.update(provider=network)
 
-        data_json = self.__get_data_json(data)
-        headers = self.__get_headers(data_json)
+        data_json = self._get_data_json(data)
+        headers = self._get_headers(data_json)
         response = requests.post(self.base_url + request_url, headers=headers, data=data_json)
         if response.status_code == 201:
             return True
@@ -153,20 +153,20 @@ class WhiteBitApi(WhiteBitAbstract):
         :param amount_price:
         :return: deposit address
         """
-        if not self.__check_to_deposit(white_bit_currency_name=currency_ticker,
-                                       amount_price=amount_price,
-                                       network=network):
+        if not self._check_to_deposit(white_bit_currency_name=currency_ticker,
+                                      amount_price=amount_price,
+                                      network=network):
             raise ExchangeAmountMinMaxError
         request_url = '/api/v4/main-account/create-new-address'
 
         data = {
             "ticker": currency_ticker,
             "request": request_url,
-            "nonce": self.__nonce
+            "nonce": self._nonce
         }
         if network:
             data.update(network=network)
-        result = self.__get_response_dict(data=data, complete_url=self.base_url + request_url)
+        result = self._get_response_dict(data=data, complete_url=self.base_url + request_url)
         return result.get("account")["address"]
 
     def get_fiat_form(self, transaction_unique_id: str, amount_price: str):
@@ -184,12 +184,12 @@ class WhiteBitApi(WhiteBitAbstract):
             "amount": amount_price,
             "uniqueId": str(transaction_unique_id),
             "request": request_url,
-            "nonce": self.__nonce
+            "nonce": self._nonce
         }
-        result = self.__get_response_dict(data=data, complete_url=self.base_url + request_url)
+        result = self._get_response_dict(data=data, complete_url=self.base_url + request_url)
         return result.get("url")
 
-    def __check_to_deposit(self, white_bit_currency_name: str, amount_price: Decimal, network: str):
+    def _check_to_deposit(self, white_bit_currency_name: str, amount_price: Decimal, network: str):
         info_for_crypto = self.get_info_for_crypto(white_bit_currency_name, network=network)
         min_amount = float(info_for_crypto['deposit']['min_amount'])
         max_amount = float(info_for_crypto['deposit']['max_amount'])
@@ -229,8 +229,8 @@ class WhiteBitApi(WhiteBitAbstract):
         client_order_id = f'order_{unique_id}'
 
         # start exchange
-        status_code = self.__transfer_to_trade_balance(currency=name_from_white_bit_exchange,
-                                                       amount_price=amount_exchange)
+        status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
+                                                      amount_price=amount_exchange)
         if status_code > 210:
             raise ExchangeTradeError('transfer_to_trade_balance failed')
 
@@ -242,8 +242,8 @@ class WhiteBitApi(WhiteBitAbstract):
             raise ExchangeTradeError('create_stock_market')
 
         time.sleep(1)
-        status_code = self.__transfer_to_main_balance(currency=name_from_white_bit_received,
-                                                      amount_price=amount_received)
+        status_code = self._transfer_to_main_balance(currency=name_from_white_bit_received,
+                                                     amount_price=amount_received)
 
         time.sleep(1)
         if status_code > 210:

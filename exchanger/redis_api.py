@@ -1,4 +1,3 @@
-import json
 import time
 from decimal import Decimal
 
@@ -51,7 +50,8 @@ class RedisCache:
 
     def cache_exchange_rates(self) -> bool:
         time_update = self.session.get("exchange_rates_time_update")
-        if not time_update or int(time_update) + 10 > int(time.time()):
+
+        if not time_update or int(time_update) + 10 < int(time.time()):
             from exchanger.models import Currency
             from exchanger.models import ExchangeRates
             from exchanger.whitebit_api import WhiteBitInfo
