@@ -194,6 +194,7 @@ def fixer_failed_trade():
     from exchanger.exchange_exceptions import ExchangeTradeError
     from django.utils import timezone
     from datetime import timedelta
+
     transactions = Transactions.objects.filter(failed=True,
                                                status='payment_received',
                                                try_fixed_count_error__lte=4,
@@ -220,7 +221,8 @@ def fixer_failed_trade():
         except ExchangeTradeError as e:
             print(e)
             transaction.try_fixed_count_error += 1
-            transaction.save(failed_error=str(e))
+            transaction.failed_error = str(e)
+            transaction.save(failed_error=True)
             return 'Retry trade'
 
 
@@ -228,8 +230,10 @@ def fixer_failed_trade():
 def fixer_failed_withdraw():
     from exchanger.models import Transactions
     from exchanger.whitebit_api import WhiteBitApi
+    from exchanger.exchange_exceptions import ExchangeTradeError
     from django.utils import timezone
     from datetime import timedelta
+
     transactions = Transactions.objects.filter(failed=True,
                                                status='currency_changing',
                                                try_fixed_count_error__lte=4,
@@ -238,20 +242,27 @@ def fixer_failed_withdraw():
         return
     white_bit_api = WhiteBitApi()
     for transaction in transactions:
-        withdraw_crypto = white_bit_api.create_withdraw(
-            unique_id=transaction.unique_id,
-            network=transaction.currency_received.network,
-            currency=transaction.currency_received.name_from_white_bit,
-            address=transaction.address,
-            amount_price=transaction.amount_received
-        )
-        if not withdraw_crypto:
+        try:
+            withdraw_crypto = white_bit_api.create_withdraw(
+                unique_id=transaction.unique_id,
+                network=transaction.currency_received.network,
+                currency=transaction.currency_received.name_from_white_bit,
+                address=transaction.address,
+                amount_price=transaction.amount_received
+            )
+            if not withdraw_crypto:
+                transaction.try_fixed_count_error += 1
+                transaction.save(failed_error=transaction.failed_error)
+                return 'Retry withdraw'
+            # status to create_for_payment
+            transaction.failed = False
+            transaction.failed_error = None
+            transaction.try_fixed_count_error = 0
+            transaction.status_update()
+            return 'Fixed failed withdraw'
+        except ExchangeTradeError as e:
+            print(e)
             transaction.try_fixed_count_error += 1
-            transaction.save(failed_error=transaction.failed_error)
-            return 'Retry withdraw'
-        # status to create_for_payment
-        transaction.failed = False
-        transaction.failed_error = None
-        transaction.try_fixed_count_error = 0
-        transaction.status_update()
-        return 'Fixed failed withdraw'
+            transaction.failed_error = str(e)
+            transaction.save(failed_error=True)
+            return 'Retry trade'
