@@ -230,12 +230,12 @@ class WhiteBitApi(WhiteBitAbstract):
 
         # start exchange
         status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
-                                                      amount_price=amount_exchange)
+                                                      amount_price=str(amount_exchange))
         if status_code > 210:
             raise ExchangeTradeError('transfer_to_trade_balance failed')
 
         time.sleep(1)
-        status_code = self.create_stock_market(amount_price=amount_received,
+        status_code = self.create_stock_market(amount_price=str(amount_received),
                                                market=market,
                                                client_order_id=client_order_id)
         if status_code > 210:
@@ -243,7 +243,7 @@ class WhiteBitApi(WhiteBitAbstract):
 
         time.sleep(1)
         status_code = self._transfer_to_main_balance(currency=name_from_white_bit_received,
-                                                     amount_price=amount_received)
+                                                     amount_price=str(amount_received))
 
         time.sleep(1)
         if status_code > 210:
