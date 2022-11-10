@@ -34,7 +34,6 @@ def generate_key() -> str:
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(15.0, update_exchange_rates.s(), name='update_exchange_rates')
     sender.add_periodic_task(120.0, fixer_failed_withdraw.s(), name='fixer_failed_withdraw')
     sender.add_periodic_task(120.0, fixer_failed_trade.s(), name='fixer_failed_trade')
 

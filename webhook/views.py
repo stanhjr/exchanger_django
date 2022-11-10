@@ -15,13 +15,11 @@ class WhiteBitWebHook(APIView):
     http_method_names = ['post', ]
 
     def post(self, request):
-        print(1)
         print(request.META.get('X-TXC-APIKEY'))
         # if request.META['X-TXC-APIKEY'] != settings.WHITEBIT_WEB_HOOK_PRIVAT_KEY:
         #     return Response(status=status.HTTP_400_BAD_REQUEST)
 
         serializer = WhiteBitSerializer(data=request.data)
-        print(2)
         if serializer.is_valid():
             method = serializer.validated_data.get("method")
             params = serializer.validated_data.get("params")
