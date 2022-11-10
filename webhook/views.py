@@ -1,5 +1,3 @@
-import time
-
 from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
@@ -9,16 +7,18 @@ from exchanger.exchange_exceptions import ExchangeTradeError
 from exchanger.models import Transactions
 from exchanger.whitebit_api import WhiteBitApi
 from webhook.serializers import WhiteBitSerializer
+from celery_tasks.tasks import send_transaction_satus
 
 
 class WhiteBitWebHook(APIView):
     white_bit_api = WhiteBitApi()
     http_method_names = ['post', ]
 
-    def post(self, request, format=None, send_transaction_satus=None):
+    def post(self, request):
         print(1)
-        if request.META['X-TXC-APIKEY'] != settings.WHITEBIT_WEB_HOOK_PRIVAT_KEY:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        print(request.META.get('X-TXC-APIKEY'))
+        # if request.META['X-TXC-APIKEY'] != settings.WHITEBIT_WEB_HOOK_PRIVAT_KEY:
+        #     return Response(status=status.HTTP_400_BAD_REQUEST)
 
         serializer = WhiteBitSerializer(data=request.data)
         print(2)
@@ -31,6 +31,8 @@ class WhiteBitWebHook(APIView):
             wallet_address = params.get("address")
             if method == 'deposit.processed' and unique_id:
                 transaction = Transactions.objects.filter(unique_id=unique_id).first()
+                if not transaction:
+                    return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
                 # status to payment_received
                 transaction.status_update()
@@ -68,6 +70,8 @@ class WhiteBitWebHook(APIView):
 
             if method == 'deposit.processed' and wallet_address:
                 transaction = Transactions.objects.filter(deposit_address=wallet_address).first()
+                if not transaction:
+                    return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
                 # status to payment_received
                 transaction.status_update()
@@ -123,7 +127,6 @@ class WhiteBitWebHook(APIView):
                                              transaction_id=transaction.unique_id,
                                              transaction_status=transaction.status)
                 return Response(serializer.data, status=status.HTTP_200_OK)
-
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -189,19 +189,6 @@ def send_transaction_satus(transaction_id: str, email_to: str, transaction_statu
 
 
 @app.task
-def update_exchange_rates():
-    from exchanger.models import ExchangeRates, Currency
-    from exchanger.whitebit_api import WhiteBitInfo
-    from exchanger.redis_api import redis_cache
-    redis_cache.set_datetime_exchange_rates_save()
-    # white_bit = WhiteBitInfo()
-    # Currency.update_min_max_value(assets_dict=white_bit.get_assets_dict())
-    # Currency.update_commission(white_bit.get_info())
-    # ExchangeRates.update_rates(tickers_list=white_bit.get_tickers_list())
-    return "currency and exchange rates updates"
-
-
-@app.task
 def fixer_failed_trade():
     from exchanger.models import Transactions
     from exchanger.whitebit_api import WhiteBitApi
