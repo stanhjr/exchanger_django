@@ -1,11 +1,15 @@
-from parler_rest.fields import TranslatedFieldsField
 from rest_framework import serializers
+from parler_rest.fields import TranslatedFieldsField
 
 from blog.mixins import TranslatedSerializerMixin
-from important_info.models import Faq, GetInTouchModel
-from important_info.models import FeedbackMonitoring
-from important_info.models import FeedbackSites
-from important_info.models import Action
+
+from important_info.models import (
+    Faq,
+    GetInTouchModel,
+    FeedbackMonitoring,
+    FeedbackSites,
+    Action
+)
 
 
 class FaqSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
@@ -41,8 +45,6 @@ class ActionSerializer(TranslatedSerializerMixin, serializers.ModelSerializer):
 
 
 class GetInTouchSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = GetInTouchModel
         fields = ['email', 'title', 'text', 'telegram']
-

@@ -22,8 +22,11 @@ from account.serializers import (
     ChangePasswordSerializer,
     ChangeTwoFactorSerializer,
     ChangeEmailSerializer,
-    LoginWithTwoAuthCodeSerializer, ResetPasswordWithCodeSerializer, CustomTokenRefreshSerializer,
-    SignUpConfirmSerializer, UserTransactionSerializer,
+    LoginWithTwoAuthCodeSerializer,
+    ResetPasswordWithCodeSerializer,
+    CustomTokenRefreshSerializer,
+    SignUpConfirmSerializer,
+    UserTransactionSerializer,
 )
 
 from celery_tasks.tasks import (

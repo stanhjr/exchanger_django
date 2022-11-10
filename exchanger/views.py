@@ -1,8 +1,8 @@
 from decimal import Decimal
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from drf_yasg.utils import swagger_auto_schema
+
 from rest_framework import generics, status
 from rest_framework import views
 from rest_framework.response import Response
@@ -14,12 +14,16 @@ from exchanger.models import Transactions
 from exchanger.models import Currency
 from exchanger.redis_api import redis_cache
 
-from exchanger.serializers import CalculateSerializer, TransactionsSerializerFiatResponse, \
-    TransactionsFiatToCryptoSerializer
-from exchanger.serializers import TransactionsSerializerResponse
-from exchanger.serializers import ExchangeSerializer
-from exchanger.serializers import TransactionsSerializer
-from exchanger.serializers import CurrencySerializer
+from exchanger.serializers import (
+    CalculateSerializer,
+    TransactionsSerializerFiatResponse,
+    TransactionsFiatToCryptoSerializer,
+    TransactionsSerializerResponse,
+    ExchangeSerializer,
+    TransactionsSerializer,
+    CurrencySerializer,
+)
+
 from exchanger.whitebit_api import WhiteBitApi
 
 

@@ -1,8 +1,6 @@
-import datetime
-
+from django.conf import settings
 from django.db import models
 from parler.models import TranslatedFields, TranslatableModel
-from exchanger_django.settings import HOST
 
 
 class Faq(TranslatableModel):
@@ -27,7 +25,7 @@ class FeedbackMonitoring(TranslatableModel):
     @property
     def image_url(self):
         if self.logo_image:
-            return f"{HOST}{self.logo_image.url}"
+            return f"{settings.HOST}{self.logo_image.url}"
 
     def __str__(self):
         return self.name
@@ -48,7 +46,7 @@ class FeedbackSites(TranslatableModel):
     @property
     def image_url(self):
         if self.logo_image:
-            return f"{HOST}{self.logo_image.url}"
+            return f"{settings.HOST}{self.logo_image.url}"
 
     def __str__(self):
         return self.name
@@ -71,7 +69,7 @@ class Action(TranslatableModel):
     @property
     def image_url(self):
         if self.image:
-            return f"{HOST}{self.image.url}"
+            return f"{settings.HOST}{self.image.url}"
 
     def __str__(self):
         return self.title
