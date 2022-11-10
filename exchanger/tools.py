@@ -4,7 +4,11 @@ from django.core.exceptions import ValidationError
 
 
 def value_to_dollars(amount_exchange: Decimal, currency_white_bit_name: str) -> Decimal:
+    from exchanger.redis_api import redis_cache
     from exchanger.models import Currency, ExchangeRates
+
+    redis_cache.cache_exchange_rates()
+
     currency_usdt = Currency.objects.filter(name_from_white_bit='USDT').first()
     currency_uah = Currency.objects.filter(name_from_white_bit='UAH').first()
     currency_to_exchange = Currency.objects.filter(name_from_white_bit=currency_white_bit_name).first()

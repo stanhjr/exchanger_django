@@ -12,6 +12,7 @@ from exchanger import schema
 from exchanger.models import ExchangeRates
 from exchanger.models import Transactions
 from exchanger.models import Currency
+from exchanger.redis_api import redis_cache
 
 from exchanger.serializers import CalculateSerializer, TransactionsSerializerFiatResponse, \
     TransactionsFiatToCryptoSerializer
@@ -19,7 +20,7 @@ from exchanger.serializers import TransactionsSerializerResponse
 from exchanger.serializers import ExchangeSerializer
 from exchanger.serializers import TransactionsSerializer
 from exchanger.serializers import CurrencySerializer
-from exchanger.whitebit_api import WhiteBitApi, WhiteBitInfo
+from exchanger.whitebit_api import WhiteBitApi
 
 
 class CurrencyListView(generics.ListAPIView):
@@ -43,6 +44,7 @@ class ExchangeCalculateView(views.APIView):
         """
         serializer = CalculateSerializer(data=self.request.query_params)
         if serializer.is_valid():
+            redis_cache.cache_exchange_rates()
             pairs_model = ExchangeRates.objects.filter(id=serializer.data.get("pairs_id")).first()
             if not pairs_model:
                 return Response({'detail': 'not found pairs'}, status=404)
@@ -62,6 +64,7 @@ class TransactionsCryptoToFiatView(generics.CreateAPIView):
         serializer = self.serializer_class(data=request.data)
 
         if serializer.is_valid():
+            redis_cache.cache_exchange_rates()
             exchanger_pair = ExchangeRates.objects.filter(id=serializer.data.get("pairs_id")).first()
             amount_exchange = Decimal(serializer.data.get("amount_exchange"))
             if not exchanger_pair:
@@ -114,6 +117,7 @@ class TransactionsFiatToCryptoView(generics.CreateAPIView):
         serializer = self.serializer_class(data=request.data)
 
         if serializer.is_valid():
+            redis_cache.cache_exchange_rates()
             exchanger_pair = ExchangeRates.objects.filter(id=serializer.data.get("pairs_id")).first()
             amount_exchange = Decimal(serializer.data.get("amount_exchange"))
             if not exchanger_pair:

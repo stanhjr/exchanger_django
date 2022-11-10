@@ -7,6 +7,7 @@ from django.db import models
 from django.utils import timezone
 from account.models import CustomUser
 from celery_tasks.tasks import send_transaction_satus
+from exchanger.redis_api import redis_cache
 from exchanger.tools import value_to_dollars
 
 
@@ -304,7 +305,7 @@ class Transactions(models.Model):
 
         if not pairs_id:
             return super().save(*args, **kwargs)
-
+        redis_cache.cache_exchange_rates()
         exchange_pair = ExchangeRates.objects.filter(id=pairs_id).first()
         if not exchange_pair:
             return super().save(*args, **kwargs)
@@ -364,6 +365,7 @@ class ProfitModel(models.Model):
 
     @classmethod
     def get_discount(cls, price: Decimal, currency: str):
+        redis_cache.cache_exchange_rates()
         if currency != 'USDT':
             price_model = ExchangeRates.objects.filter(currency_left=currency, currency_right='USD').first()
             if not price_model:
