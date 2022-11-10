@@ -152,7 +152,7 @@ class ExchangeRates(models.Model):
         if not tickers_list:
             return
         exchange_rates = cls.objects.all().prefetch_related('currency_left', 'currency_right')
-        from redis_api import redis_cache
+        from exchanger.redis_api import redis_cache
         for pair in exchange_rates:
             for ticker in tickers_list:
                 if pair.currency_left.fiat and ticker.get('tradingPairs') == pair.fiat_market:
@@ -183,16 +183,16 @@ class ExchangeRates(models.Model):
         return Decimal(price_left) * (self.value_left * self.value_right)
 
     def get_calculate(self, price_left: Decimal):
-        from redis_api import redis_cache
+        from exchanger.redis_api import redis_cache
         value_without_commission = Decimal(price_left) * (self.value_left * self.value_right)
         white_bit_commission = value_without_commission * redis_cache.white_bit_commission + self.currency_right.commission_withdraw
         result = value_without_commission - white_bit_commission
         return result.quantize(Decimal("1.0000"))
 
     def get_info_calculate(self, price_left: Decimal):
-        from redis_api import redis_cache
+        from exchanger.redis_api import redis_cache
         value_without_commission = Decimal(price_left) * (self.value_left * self.value_right)
-        white_bit_commission = value_without_commission * redis_cache.white_bit_commission_percent + self.currency_right.commission_withdraw
+        white_bit_commission = value_without_commission * redis_cache.white_bit_commission + self.currency_right.commission_withdraw
         result = value_without_commission - white_bit_commission
         return {"value": result,
                 "blockchain_commission": value_to_dollars(white_bit_commission, self.currency_right.name_from_white_bit)}
@@ -405,11 +405,11 @@ class Commissions(models.Model):
         return self.service_commission_to_crypto / 100
 
     def set_commission(self):
-        from redis_api import redis_cache
+        from exchanger.redis_api import redis_cache
         redis_cache.set_commission(dict_percent_commission={
-            "white_bit_commission": self.white_bit_commission_percent,
-            "commission_to_crypto": self.to_crypto_commission_percent,
-            "commission_to_fiat": self.to_fiat_commission_percent
+            "white_bit_commission": str(self.white_bit_commission_percent),
+            "commission_to_crypto": str(self.to_crypto_commission_percent),
+            "commission_to_fiat": str(self.to_fiat_commission_percent)
         })
 
     def save(self, *args, **kwargs) -> None:

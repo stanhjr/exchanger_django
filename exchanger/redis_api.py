@@ -1,3 +1,4 @@
+import json
 import time
 from decimal import Decimal
 
@@ -6,7 +7,7 @@ import redis
 
 class RedisCache:
     def __init__(self):
-        self.session = redis.StrictRedis(host='localhost', port=6379, db=5)
+        self.session = redis.StrictRedis(host='localhost', port=6379, db=5, decode_responses=True)
 
     @property
     def commission_to_fiat(self) -> Decimal:
@@ -16,6 +17,7 @@ class RedisCache:
             commission = Commissions.objects.first()
             commission.set_commission()
             return Decimal(commission.to_fiat_commission_percent)
+
         return Decimal(commission)
 
     @property
