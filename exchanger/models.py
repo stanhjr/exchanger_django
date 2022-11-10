@@ -151,17 +151,17 @@ class ExchangeRates(models.Model):
         if not tickers_list:
             return
         exchange_rates = cls.objects.all().prefetch_related('currency_left', 'currency_right')
-        commission_obj = Commissions.objects.first()
+        from redis_api import redis_cache
         for pair in exchange_rates:
             for ticker in tickers_list:
                 if pair.currency_left.fiat and ticker.get('tradingPairs') == pair.fiat_market:
                     pair.value_left = 1
                     last_price = Decimal(ticker.get('lastPrice'))
-                    commission = Decimal(1 / last_price) * commission_obj.to_crypto_commission_percent
+                    commission = Decimal(1 / last_price) * redis_cache.commission_to_crypto
                     pair.value_right = Decimal(1 / last_price) + commission
                 elif ticker.get('tradingPairs') == pair.market:
                     pair.value_left = 1
-                    commission = Decimal(ticker.get('lastPrice')) * commission_obj.to_fiat_commission_percent
+                    commission = Decimal(ticker.get('lastPrice')) * redis_cache.commission_to_fiat
                     pair.value_right = Decimal(ticker.get('lastPrice')) + commission
             pair.save()
         return exchange_rates
@@ -182,16 +182,16 @@ class ExchangeRates(models.Model):
         return Decimal(price_left) * (self.value_left * self.value_right)
 
     def get_calculate(self, price_left: Decimal):
-        commissions = Commissions.objects.first()
+        from redis_api import redis_cache
         value_without_commission = Decimal(price_left) * (self.value_left * self.value_right)
-        white_bit_commission = value_without_commission * commissions.white_bit_commission_percent + self.currency_right.commission_withdraw
+        white_bit_commission = value_without_commission * redis_cache.white_bit_commission + self.currency_right.commission_withdraw
         result = value_without_commission - white_bit_commission
         return result.quantize(Decimal("1.0000"))
 
     def get_info_calculate(self, price_left: Decimal):
-        commissions = Commissions.objects.first()
+        from redis_api import redis_cache
         value_without_commission = Decimal(price_left) * (self.value_left * self.value_right)
-        white_bit_commission = value_without_commission * commissions.white_bit_commission_percent + self.currency_right.commission_withdraw
+        white_bit_commission = value_without_commission * redis_cache.white_bit_commission_percent + self.currency_right.commission_withdraw
         result = value_without_commission - white_bit_commission
         return {"value": result,
                 "blockchain_commission": value_to_dollars(white_bit_commission, self.currency_right.name_from_white_bit)}
@@ -399,3 +399,16 @@ class Commissions(models.Model):
     @property
     def to_crypto_commission_percent(self):
         return self.service_commission_to_crypto / 100
+
+    def set_commission(self):
+        from redis_api import redis_cache
+        redis_cache.set_commission(dict_percent_commission={
+            "white_bit_commission": self.white_bit_commission_percent,
+            "commission_to_crypto": self.to_crypto_commission_percent,
+            "commission_to_fiat": self.to_fiat_commission_percent
+        })
+
+    def save(self, *args, **kwargs) -> None:
+        self.set_commission()
+        return super().save(*args, **kwargs)
+
