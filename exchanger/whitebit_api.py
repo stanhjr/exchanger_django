@@ -152,7 +152,7 @@ class WhiteBitApi(WhiteBitAbstract):
         if to_crypto:
             side = 'buy'
         else:
-            side = 'buy'
+            side = 'sell'
 
         data = {
             "market": market,
