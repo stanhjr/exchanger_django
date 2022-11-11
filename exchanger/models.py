@@ -72,10 +72,12 @@ class Currency(models.Model):
                 currency.commission_deposit = get_zero_or_none(currency_info['deposit'].get('fixed'))
                 currency.commission_withdraw = get_zero_or_none(currency_info['withdraw'].get('fixed'))
             else:
-                currency.commission_deposit = get_zero_or_none(currency_info['deposit'][currency.ticker_fiat_for_update_commission].get(
-                    'fixed'))
+                currency.commission_deposit = get_zero_or_none(
+                    currency_info['deposit'][currency.ticker_fiat_for_update_commission].get(
+                        'fixed'))
                 currency.commission_withdraw = get_zero_or_none(currency_info['withdraw'][
-                    currency.ticker_fiat_for_update_commission].get('fixed'))
+                    currency.ticker_fiat_for_update_commission].get(
+                    'fixed'))
 
             currency.save()
         return queryset
@@ -197,7 +199,8 @@ class ExchangeRates(models.Model):
         white_bit_commission = value_without_commission * redis_cache.white_bit_commission + self.currency_right.commission_withdraw
         result = value_without_commission - white_bit_commission
         return {"value": result,
-                "blockchain_commission": value_to_dollars(white_bit_commission, self.currency_right.name_from_white_bit)}
+                "blockchain_commission": value_to_dollars(white_bit_commission,
+                                                          self.currency_right.name_from_white_bit)}
 
     def clean(self):
         if self.value_right <= 0 or self.value_left <= 0:
@@ -257,6 +260,13 @@ class Transactions(models.Model):
         send_transaction_satus.delay(email_to=self.email,
                                      transaction_id=self.unique_id,
                                      transaction_status=self.status)
+
+    @property
+    def amount_real_exchange(self):
+        if self.currency_exchange.fiat:
+            return self.amount_exchange - self.amount_exchange / 100 * Decimal(1.5)
+        return self.amount_exchange
+
     @property
     def crypto_to_fiat(self) -> bool:
         if self.currency_received.fiat:
@@ -417,4 +427,3 @@ class Commissions(models.Model):
     def save(self, *args, **kwargs) -> None:
         self.set_commission()
         return super().save(*args, **kwargs)
-

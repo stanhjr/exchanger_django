@@ -117,6 +117,19 @@ class WhiteBitApi(WhiteBitAbstract):
         for dict_ in result_list:
             if dict_.get('name') == market:
                 return int(dict_.get('stockPrec'))
+        raise ExchangeTradeError('get_stock_precision ERROR')
+
+    def _get_money_precision(self, market: str) -> int:
+        request_url = '/api/v2/public/markets'
+        response = requests.get(url=self.base_url + request_url)
+        result_dict = response.json()
+        result_list = result_dict.get('result')
+        market = market.split('_')
+        market = f'{market[1]}_{market[0]}'
+        for dict_ in result_list:
+            if dict_.get('name') == market:
+                return int(dict_.get('moneyPrec'))
+        raise ExchangeTradeError('_get_money_precision ERROR')
 
     def get_history_from_currency(self, currency_ticker: str):
         request_url = '/api/v4/main-account/history'
@@ -237,11 +250,12 @@ class WhiteBitApi(WhiteBitAbstract):
         return Decimal(info_for_crypto['withdraw']['fixed'])
 
     def start_trading(self, transaction_pk: str, name_from_white_bit_exchange: str, name_from_white_bit_received: str,
-                      market: str, amount_received: str, amount_exchange: str):
+                      market: str, amount_received: str, amount_exchange: str, to_crypto=None):
         """
         Takes params and exchange from WhiteBit, returned True If the exchange was successful
         raise ExchangeTradeError If the exchange was not successful
 
+        :param to_crypto:
         :param transaction_pk:
         :param name_from_white_bit_exchange:
         :param name_from_white_bit_received:
@@ -251,11 +265,15 @@ class WhiteBitApi(WhiteBitAbstract):
         :return: True
         """
 
-        client_order_id = f'order-{transaction_pk}'
+        client_order_id = f'torder-{transaction_pk}'
         amount_exchange = str(Decimal(amount_exchange).quantize(Decimal("1.00000000")))
-        received_precision = f'1.{"0" * self._get_stock_precision(market=market)}'
+        if to_crypto:
+            received_precision = f'1.{"0" * self._get_money_precision(market=market)}'
+        else:
+            received_precision = f'1.{"0" * self._get_stock_precision(market=market)}'
 
         amount_received = str(Decimal(amount_received).quantize(Decimal(received_precision)))
+
         # start exchange
         status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
                                                       amount_price=amount_exchange)
@@ -283,12 +301,12 @@ class WhiteBitApi(WhiteBitAbstract):
 wb = WhiteBitApi()
 # wb.start_trading(
 #     transaction_pk='2',
-#     name_from_white_bit_exchange='USDT',
-#     name_from_white_bit_received='UAH',
-#     market='USDT_UAH',
-#     amount_received='128.055800000000000000000000000000',
-#     amount_exchange='3.8000000000000000000000000000'
-#
+#     name_from_white_bit_exchange='UAH',
+#     name_from_white_bit_received='USDT',
+#     market='UAH_USDT',
+#     amount_exchange='500.000000000000000000000000000000',
+#     amount_received='11.311900000000000000000000000000',
+#     to_crypto=True
 # )
 
 # wb.create_withdraw(
