@@ -151,6 +151,11 @@ class ExchangeRates(models.Model):
     def fiat_market(self):
         return f'{self.currency_right.name_from_white_bit}_{self.currency_left.name_from_white_bit}'
 
+    def _get_deposit_commission(self, price_left: Decimal) -> Decimal:
+        if self.currency_left.fiat:
+            return Decimal(price_left) - Decimal(price_left) / 100 * Decimal(1.5)
+        return Decimal(price_left)
+
     @classmethod
     def update_rates(cls, tickers_list: list):
         if not tickers_list:
@@ -188,14 +193,14 @@ class ExchangeRates(models.Model):
 
     def get_calculate(self, price_left: Decimal):
         from exchanger.redis_api import redis_cache
-        value_without_commission = Decimal(price_left) * (self.value_left * self.value_right)
+        value_without_commission = self._get_deposit_commission(price_left) * (self.value_left * self.value_right)
         white_bit_commission = value_without_commission * redis_cache.white_bit_commission + self.currency_right.commission_withdraw
         result = value_without_commission - white_bit_commission
         return result.quantize(Decimal("1.0000"))
 
     def get_info_calculate(self, price_left: Decimal):
         from exchanger.redis_api import redis_cache
-        value_without_commission = Decimal(price_left) * (self.value_left * self.value_right)
+        value_without_commission = self._get_deposit_commission(price_left) * (self.value_left * self.value_right)
         white_bit_commission = value_without_commission * redis_cache.white_bit_commission + self.currency_right.commission_withdraw
         result = value_without_commission - white_bit_commission
         return {"value": result,
@@ -331,7 +336,7 @@ class Transactions(models.Model):
 
         self.currency_exchange = exchange_pair.currency_left
         self.currency_received = exchange_pair.currency_right
-        self.amount_received = exchange_pair.get_calculate(self.amount_exchange + self.currency_exchange.commission_withdraw)
+        self.amount_received = exchange_pair.get_calculate(self.amount_exchange)
 
         currency_usdt = Currency.objects.filter(name_from_white_bit='USDT').first()
         currency_uah = Currency.objects.filter(name_from_white_bit='UAH').first()
