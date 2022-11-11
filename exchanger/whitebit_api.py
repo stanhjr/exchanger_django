@@ -143,24 +143,6 @@ class WhiteBitApi(WhiteBitAbstract):
         result = self._get_response_dict(data=data, complete_url=self.base_url + request_url)
         print(result)
 
-    def create_stock_market(self, amount_price: str, market: str, client_order_id: str, to_crypto=None) -> int:
-        request_url = '/api/v4/order/stock_market'
-        if to_crypto:
-            side = 'sell'
-        else:
-            side = 'buy'
-
-        data = {
-            "market": market,
-            "side": side,
-            "clientOrderId": client_order_id,
-            "amount": amount_price,
-            "request": request_url,
-            "nonce": self._nonce,
-        }
-        print(data)
-        return self._get_response_status_code(data=data, complete_url=self.base_url + request_url)
-
     def create_withdraw(self, amount_price: str, currency: str, address: str,
                         unique_id: str, provider: str, network: str):
 
@@ -308,18 +290,18 @@ class WhiteBitApi(WhiteBitAbstract):
         amount_exchange = str(Decimal(amount_exchange).quantize(Decimal("1.00000000")))
 
         # start exchange
-        # status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
-        #                                               amount_price=amount_exchange)
-        # if status_code > 210:
-        #     raise ExchangeTradeError('transfer_to_trade_balance failed')
+        status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
+                                                      amount_price=amount_exchange)
+        if status_code > 210:
+            raise ExchangeTradeError('ERROR transfer_to_trade_balance failed')
 
         time.sleep(1)
 
         if to_crypto:
             status_code = self.exchange_fiat_to_crypto(
+                market=market,
                 client_order_id=client_order_id,
                 amount_received=amount_received,
-                market=market
             )
         else:
             status_code = self.exchange_crypto_to_fiat(
@@ -329,7 +311,7 @@ class WhiteBitApi(WhiteBitAbstract):
             )
 
         if status_code > 210:
-            raise ExchangeTradeError('create_stock_market')
+            raise ExchangeTradeError('ERROR exchange API')
 
         time.sleep(1)
         status_code = self._transfer_to_main_balance(currency=name_from_white_bit_received,
@@ -337,7 +319,7 @@ class WhiteBitApi(WhiteBitAbstract):
 
         time.sleep(1)
         if status_code > 210:
-            raise ExchangeTradeError('transfer_to_main_balance failed')
+            raise ExchangeTradeError('ERROR transfer_to_main_balance failed')
 
         return True
 
@@ -368,13 +350,15 @@ if __name__ == '__main__':
     wb = WhiteBitApi()
     wb.get_trade_balance()
     wb.get_main_balance()
+    # wb._transfer_to_main_balance(currency='UAH',
+    #                             amount_price='850.000')
     # wb.exchange_fiat_to_crypto(
     #     market='USDT_UAH',
-    #     client_order_id='fdfdorder-client-10',
+    #     client_order_id='fdfgdorder-client-10',
     #     amount_received='20.0044000000004444400000000000'
     # )
     # wb.exchange_crypto_to_fiat(
     #     market='USDT_UAH',
-    #     client_order_id='f43fdorder-client-10',
-    #     amount_exchange='3.022222222220333333333333'
+    #     client_order_id='ff43fdorder-client-10',
+    #     amount_exchange='20.00'
     # )
