@@ -177,7 +177,6 @@ class WhiteBitApi(WhiteBitAbstract):
         if network:
             data.update(network=network)
         if provider:
-            data.pop("network")
             data.update(provider=network)
 
         data_json = self._get_data_json(data)
