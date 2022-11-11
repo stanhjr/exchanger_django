@@ -56,7 +56,7 @@ class WhiteBitWebHook(APIView):
                     network=str(transaction.currency_received.network_for_min_max),
                     currency=str(transaction.currency_received.name_from_white_bit),
                     address=str(transaction.address),
-                    amount_price=str(transaction.amount_received)
+                    amount_price=str(transaction.amount_received + transaction.currency_received.commission_withdraw)
                 )
                 if not withdraw_crypto:
                     transaction.failed = True
@@ -98,7 +98,7 @@ class WhiteBitWebHook(APIView):
                     network=transaction.currency_received.network,
                     currency=transaction.currency_received.name_from_white_bit,
                     address=transaction.address,
-                    amount_price=str(transaction.amount_received),
+                    amount_price=str(transaction.amount_received + transaction.currency_received.commission_withdraw),
                     provider=True,
                 )
                 if not withdraw_crypto:

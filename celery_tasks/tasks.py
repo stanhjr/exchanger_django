@@ -251,7 +251,7 @@ def fixer_failed_withdraw():
                 network=transaction.currency_received.network,
                 currency=transaction.currency_received.name_from_white_bit,
                 address=transaction.address,
-                amount_price=str(transaction.amount_received),
+                amount_price=str(transaction.amount_received + transaction.currency_exchange.commission_withdraw),
                 provider=provider,
 
             )
