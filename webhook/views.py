@@ -44,6 +44,7 @@ class WhiteBitWebHook(APIView):
                         market=transaction.market,
                         amount_exchange=str(transaction.amount_real_exchange),
                         amount_received=str(transaction.amount_received),
+                        to_crypto=True
                     )
                 except ExchangeTradeError as e:
                     print(e)
