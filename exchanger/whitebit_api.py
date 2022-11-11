@@ -331,6 +331,7 @@ class WhiteBitApi(WhiteBitAbstract):
 
 wb = WhiteBitApi()
 wb.get_trade_balance()
+wb.get_main_balance()
 # wb.start_trading(
 #     transaction_pk='2',
 #     name_from_white_bit_exchange='UAH',

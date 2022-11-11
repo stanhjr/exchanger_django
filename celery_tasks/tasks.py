@@ -187,6 +187,40 @@ def send_transaction_satus(transaction_id: str, email_to: str, transaction_statu
         print("Something went wrong….", ex)
 
 
+def transaction_to_withdraw(transaction, white_bit_api):
+    from exchanger.exchange_exceptions import ExchangeTradeError
+    try:
+        provider = None
+        if transaction.crypto_to_fiat:
+            provider = True
+        withdraw_crypto = white_bit_api.create_withdraw(
+            # unique_id=str(transaction.unique_id),
+            unique_id=str(transaction.fiat_unique_id),
+            network=transaction.currency_received.network,
+            currency=transaction.currency_received.name_from_white_bit,
+            address=transaction.address,
+            amount_price=str(transaction.amount_received + transaction.currency_exchange.commission_withdraw),
+            provider=provider,
+
+        )
+        if not withdraw_crypto:
+            transaction.try_fixed_count_error += 1
+            transaction.save(failed_error=transaction.failed_error)
+            return 'Retry withdraw'
+        # status to create_for_payment
+        transaction.failed = False
+        transaction.failed_error = None
+        transaction.try_fixed_count_error = 0
+        transaction.status_update()
+        return 'Fixed failed withdraw'
+    except ExchangeTradeError as e:
+        print(e)
+        transaction.try_fixed_count_error += 1
+        transaction.failed_error = str(e)
+        transaction.save(failed_error=True)
+        return 'Retry trade'
+
+
 @app.task
 def fixer_failed_trade():
     from exchanger.models import Transactions
@@ -227,6 +261,8 @@ def fixer_failed_trade():
             transaction.try_fixed_count_error += 1
             transaction.failed_error = str(e)
             transaction.save(failed_error=True)
+            transaction_to_withdraw(transaction=transaction,
+                                    white_bit_api=white_bit_api)
             return 'Retry trade'
 
 
