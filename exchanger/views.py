@@ -152,7 +152,7 @@ class TransactionsFiatToCryptoView(generics.CreateAPIView):
             white_bit_api = WhiteBitApi()
             try:
                 transaction.deposit_address = white_bit_api.get_fiat_form(
-                    transaction_unique_id=transaction.unique_id,
+                    transaction_unique_id=str(transaction.unique_id),
                     amount_price=str(transaction.amount_exchange),
 
                 )

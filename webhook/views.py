@@ -125,7 +125,7 @@ class WhiteBitWebHook(APIView):
                 transaction.try_fixed_count_error = 0
                 transaction.save()
                 send_transaction_satus.delay(email_to=transaction.email,
-                                             transaction_id=transaction.unique_id,
+                                             transaction_id=str(transaction.unique_id),
                                              transaction_status=transaction.status)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.data, status=status.HTTP_200_OK)
