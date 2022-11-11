@@ -162,6 +162,7 @@ class WhiteBitApi(WhiteBitAbstract):
             "request": request_url,
             "nonce": self._nonce,
         }
+        print(data)
         return self._get_response_status_code(data=data, complete_url=self.base_url + request_url)
 
     def create_withdraw(self, amount_price: str, currency: str, address: str,
