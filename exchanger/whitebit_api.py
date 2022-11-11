@@ -174,10 +174,11 @@ class WhiteBitApi(WhiteBitAbstract):
             "request": request_url,
             "nonce": self._nonce
         }
+        print(network, 'network')
         if network:
-            data.update(network=network)
+            data.update(network=str(network))
         if provider:
-            data.update(provider=network)
+            data.update(provider=str(network))
 
         data_json = self._get_data_json(data)
         headers = self._get_headers(data_json)
