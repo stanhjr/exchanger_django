@@ -254,6 +254,22 @@ class WhiteBitApi(WhiteBitAbstract):
             return 0
         return Decimal(info_for_crypto['withdraw']['fixed'])
 
+    def _get_amount_received(self, amount_received, market, to_crypto=None, revert=False):
+        if not revert:
+            if not to_crypto:
+                received_precision = f'1.{"0" * self._get_money_precision(market=market)}'
+            else:
+                received_precision = f'1.{"0" * self._get_stock_precision(market=market)}'
+        else:
+            if to_crypto:
+                received_precision = f'1.{"0" * self._get_money_precision(market=market)}'
+            else:
+                received_precision = f'1.{"0" * self._get_stock_precision(market=market)}'
+        if received_precision == '1.':
+            received_precision = '1'
+
+        return str(Decimal(amount_received).quantize(Decimal(received_precision)))
+
     def start_trading(self, transaction_pk: str, name_from_white_bit_exchange: str, name_from_white_bit_received: str,
                       market: str, amount_received: str, amount_exchange: str, to_crypto=None):
         """
@@ -272,24 +288,32 @@ class WhiteBitApi(WhiteBitAbstract):
 
         client_order_id = f'order-client-{transaction_pk}'
         amount_exchange = str(Decimal(amount_exchange).quantize(Decimal("1.00000000")))
-        if to_crypto:
-            received_precision = f'1.{"0" * self._get_money_precision(market=market)}'
-        else:
-            received_precision = f'1.{"0" * self._get_stock_precision(market=market)}'
-
-        amount_received = str(Decimal(amount_received).quantize(Decimal(received_precision)))
+        amount_received = self._get_amount_received(amount_received=amount_received,
+                                                    market=market,
+                                                    to_crypto=to_crypto)
 
         # start exchange
-        status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
-                                                      amount_price=amount_exchange)
-        if status_code > 210:
-            raise ExchangeTradeError('transfer_to_trade_balance failed')
+        # status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
+        #                                               amount_price=amount_exchange)
+        # if status_code > 210:
+        #     raise ExchangeTradeError('transfer_to_trade_balance failed')
 
         time.sleep(1)
-        status_code = self.create_stock_market(amount_price=amount_received,
-                                               market=market,
-                                               client_order_id=client_order_id,
-                                               to_crypto=to_crypto)
+        try:
+            status_code = self.create_stock_market(amount_price=amount_received,
+                                                   market=market,
+                                                   client_order_id=client_order_id,
+                                                   to_crypto=to_crypto)
+        except Exception as e:
+            amount_received = self._get_amount_received(amount_received=amount_received,
+                                                        market=market,
+                                                        to_crypto=to_crypto,
+                                                        revert=True)
+
+            status_code = self.create_stock_market(amount_price=amount_received,
+                                                   market=market,
+                                                   client_order_id=client_order_id,
+                                                   to_crypto=to_crypto)
 
         if status_code > 210:
             raise ExchangeTradeError('create_stock_market')
