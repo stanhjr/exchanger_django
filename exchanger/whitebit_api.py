@@ -150,9 +150,9 @@ class WhiteBitApi(WhiteBitAbstract):
     def create_stock_market(self, amount_price: str, market: str, client_order_id: str, to_crypto=None) -> int:
         request_url = '/api/v4/order/stock_market'
         if to_crypto:
-            side = 'buy'
-        else:
             side = 'sell'
+        else:
+            side = 'buy'
 
         data = {
             "market": market,
@@ -295,8 +295,8 @@ class WhiteBitApi(WhiteBitAbstract):
                                                     to_crypto=to_crypto)
 
         # start exchange
-        # status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
-        #                                               amount_price=amount_exchange)
+        status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
+                                                      amount_price=amount_exchange)
         # if status_code > 210:
         #     raise ExchangeTradeError('transfer_to_trade_balance failed')
 
@@ -357,4 +357,9 @@ if __name__ == '__main__':
     wb = WhiteBitApi()
     wb.get_trade_balance()
     wb.get_main_balance()
+    # wb.create_stock_market(
+    #     market='USDT_UAH',
+    #     amount_price='800.00',
+    #     client_order_id='order-client-10')
+
 
