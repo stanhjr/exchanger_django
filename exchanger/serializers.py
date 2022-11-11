@@ -28,6 +28,17 @@ class ExchangeIdSerializer(serializers.ModelSerializer):
 
 
 class TransactionsSerializer(serializers.ModelSerializer):
+    def validate(self, data):
+        data = super().validate(data)
+        address = data.get('address')
+        if len(address.split()) > 1:
+            raise serializers.ValidationError("remove spaces in payment address")
+        if len(address) != 16 or not address.isdigit():
+            raise serializers.ValidationError("credit card number must be 16 digits")
+        return data
+
+
+class TransactionsFiatToCryptoSerializer(TransactionsSerializer):
     pairs_id = serializers.IntegerField(required=True)
 
     class Meta:
@@ -42,17 +53,6 @@ class TransactionsSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("remove spaces in payment address")
         if len(address) < 16:
             raise serializers.ValidationError("payment address length cannot be less than 16")
-        return data
-
-
-class TransactionsFiatToCryptoSerializer(TransactionsSerializer):
-    def validate(self, data):
-        data = super().validate(data)
-        address = data.get('address')
-        if len(address.split()) > 1:
-            raise serializers.ValidationError("remove spaces in payment address")
-        if len(address) != 16 or not address.isdigit():
-            raise serializers.ValidationError("credit card number must be 16 digits")
         return data
 
 
