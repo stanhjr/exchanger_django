@@ -205,7 +205,7 @@ def fixer_failed_trade():
     for transaction in transactions:
         try:
             white_bit_api.start_trading(
-                unique_id=transaction.unique_id,
+                transaction_pk=transaction.pk,
                 name_from_white_bit_exchange=transaction.currency_exchange.name_from_white_bit,
                 name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
                 market=transaction.market,

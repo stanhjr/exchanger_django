@@ -242,7 +242,7 @@ class Transactions(models.Model):
         verbose_name_plural = 'Transaction'
         ordering = ['-created_at', 'is_confirm']
 
-    def status_update(self, email) -> None:
+    def status_update(self) -> None:
         status_dict = {
             'created': 'payment_received',
             'payment_received': 'currency_changing',

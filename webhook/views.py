@@ -15,7 +15,9 @@ class WhiteBitWebHook(APIView):
     http_method_names = ['post', ]
 
     def post(self, request):
-        print(request.META.get('X-TXC-APIKEY'))
+        # print(request.META.get('X-TXC-APIKEY'))
+        print(request.headers)
+        print(request.headers.get('X-TXC-APIKEY'))
         # if request.META['X-TXC-APIKEY'] != settings.WHITEBIT_WEB_HOOK_PRIVAT_KEY:
         #     return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -36,7 +38,7 @@ class WhiteBitWebHook(APIView):
                 transaction.status_update()
                 try:
                     self.white_bit_api.start_trading(
-                        unique_id=transaction.unique_id,
+                        transaction_pk=transaction.pk,
                         name_from_white_bit_exchange=transaction.currency_exchange.name_from_white_bit,
                         name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
                         market=transaction.market,
@@ -52,7 +54,7 @@ class WhiteBitWebHook(APIView):
                 transaction.status_update()
                 withdraw_crypto = self.white_bit_api.create_withdraw(
                     unique_id=transaction.unique_id,
-                    network=transaction.currency_received.network,
+                    network=transaction.currency_received.network_for_min_max,
                     currency=transaction.currency_received.name_from_white_bit,
                     address=transaction.address,
                     amount_price=transaction.amount_received
@@ -75,7 +77,7 @@ class WhiteBitWebHook(APIView):
                 transaction.status_update()
                 try:
                     self.white_bit_api.start_trading(
-                        unique_id=transaction.unique_id,
+                        transaction_pk=transaction.pk,
                         name_from_white_bit_exchange=transaction.currency_exchange.name_from_white_bit,
                         name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
                         market=transaction.market,
