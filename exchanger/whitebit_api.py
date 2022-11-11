@@ -14,7 +14,6 @@ from exchanger.exchange_exceptions import ExchangeTradeError
 
 class WhiteBitAbstract:
     def __init__(self):
-
         self.api_key = settings.WHITEBIT_API_KEY
         self.secret_key = settings.WHITEBIT_SECRET_KEY
         self.base_url = 'https://whitebit.com'
@@ -117,7 +116,7 @@ class WhiteBitApi(WhiteBitAbstract):
         result_list = result_dict.get('result')
         for dict_ in result_list:
             if dict_.get('name') == market:
-                return int(dict_.get('moneyPrec'))
+                return int(dict_.get('stockPrec'))
         raise ExchangeTradeError('get_stock_precision ERROR')
 
     def _get_money_precision(self, market: str) -> int:
@@ -125,11 +124,9 @@ class WhiteBitApi(WhiteBitAbstract):
         response = requests.get(url=self.base_url + request_url)
         result_dict = response.json()
         result_list = result_dict.get('result')
-        # market = market.split('_')
-        # market = f'{market[1]}_{market[0]}'
         for dict_ in result_list:
             if dict_.get('name') == market:
-                return int(dict_.get('stockPrec'))
+                return int(dict_.get('moneyPrec'))
         raise ExchangeTradeError('_get_money_precision ERROR')
 
     def get_history_from_currency(self, currency_ticker: str):
@@ -255,21 +252,41 @@ class WhiteBitApi(WhiteBitAbstract):
             return 0
         return Decimal(info_for_crypto['withdraw']['fixed'])
 
-    def _get_amount_received(self, amount_received, market, to_crypto=None, revert=False):
-        if not revert:
-            if not to_crypto:
-                received_precision = f'1.{"0" * self._get_money_precision(market=market)}'
-            else:
-                received_precision = f'1.{"0" * self._get_stock_precision(market=market)}'
-        else:
-            if to_crypto:
-                received_precision = f'1.{"0" * self._get_money_precision(market=market)}'
-            else:
-                received_precision = f'1.{"0" * self._get_stock_precision(market=market)}'
-        if received_precision == '1.':
-            received_precision = '1'
+    def _get_amount_precision(self, amount, market):
+        precision = f'1.{"0" * self._get_stock_precision(market=market)}'
+        if precision == '1.':
+            precision = '1'
+        return str(Decimal(amount).quantize(Decimal(precision)))
 
-        return str(Decimal(amount_received).quantize(Decimal(received_precision)))
+    def exchange_fiat_to_crypto(self, client_order_id: str, amount_received: str, market: str):
+        request_url = '/api/v4/order/stock_market'
+        amount_received = self._get_amount_precision(amount=amount_received,
+                                                     market=market)
+        data = {
+            "market": market,
+            "side": 'buy',
+            "clientOrderId": client_order_id,
+            "amount": amount_received,
+            "request": request_url,
+            "nonce": self._nonce,
+        }
+        print(data)
+        return self._get_response_status_code(data=data, complete_url=self.base_url + request_url)
+
+    def exchange_crypto_to_fiat(self, client_order_id: str, amount_exchange: str, market: str):
+        request_url = '/api/v4/order/stock_market'
+        amount_exchange = self._get_amount_precision(amount=amount_exchange,
+                                                     market=market)
+        data = {
+            "market": market,
+            "side": 'sell',
+            "clientOrderId": client_order_id,
+            "amount": amount_exchange,
+            "request": request_url,
+            "nonce": self._nonce,
+        }
+        print(data)
+        return self._get_response_status_code(data=data, complete_url=self.base_url + request_url)
 
     def start_trading(self, transaction_pk: str, name_from_white_bit_exchange: str, name_from_white_bit_received: str,
                       market: str, amount_received: str, amount_exchange: str, to_crypto=None):
@@ -289,9 +306,6 @@ class WhiteBitApi(WhiteBitAbstract):
 
         client_order_id = f'order-client-{transaction_pk}'
         amount_exchange = str(Decimal(amount_exchange).quantize(Decimal("1.00000000")))
-        amount_received = self._get_amount_received(amount_received=amount_received,
-                                                    market=market,
-                                                    to_crypto=to_crypto)
 
         # start exchange
         # status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
@@ -300,21 +314,19 @@ class WhiteBitApi(WhiteBitAbstract):
         #     raise ExchangeTradeError('transfer_to_trade_balance failed')
 
         time.sleep(1)
-        try:
-            status_code = self.create_stock_market(amount_price=amount_exchange,
-                                                   market=market,
-                                                   client_order_id=client_order_id,
-                                                   to_crypto=to_crypto)
-        except Exception as e:
-            amount_received = self._get_amount_received(amount_received=amount_exchange,
-                                                        market=market,
-                                                        to_crypto=to_crypto,
-                                                        revert=True)
 
-            status_code = self.create_stock_market(amount_price=amount_exchange,
-                                                   market=market,
-                                                   client_order_id=client_order_id,
-                                                   to_crypto=to_crypto)
+        if to_crypto:
+            status_code = self.exchange_fiat_to_crypto(
+                client_order_id=client_order_id,
+                amount_received=amount_received,
+                market=market
+            )
+        else:
+            status_code = self.exchange_crypto_to_fiat(
+                market=market,
+                client_order_id=client_order_id,
+                amount_exchange=amount_exchange
+            )
 
         if status_code > 210:
             raise ExchangeTradeError('create_stock_market')
@@ -356,9 +368,13 @@ if __name__ == '__main__':
     wb = WhiteBitApi()
     wb.get_trade_balance()
     wb.get_main_balance()
-    wb.create_stock_market(
-        market='USDT_UAH',
-        amount_price='800.00',
-        client_order_id='order-client-10')
-
-
+    # wb.exchange_fiat_to_crypto(
+    #     market='USDT_UAH',
+    #     client_order_id='fdfdorder-client-10',
+    #     amount_received='20.0044000000004444400000000000'
+    # )
+    # wb.exchange_crypto_to_fiat(
+    #     market='USDT_UAH',
+    #     client_order_id='f43fdorder-client-10',
+    #     amount_exchange='3.022222222220333333333333'
+    # )
