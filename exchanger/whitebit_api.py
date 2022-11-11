@@ -6,7 +6,7 @@ import time
 from decimal import Decimal
 
 import requests
-# from django.conf import settings
+from django.conf import settings
 
 from exchanger.exchange_exceptions import ExchangeAmountMinMaxError
 from exchanger.exchange_exceptions import ExchangeTradeError
@@ -14,10 +14,9 @@ from exchanger.exchange_exceptions import ExchangeTradeError
 
 class WhiteBitAbstract:
     def __init__(self):
-        self.api_key = '3fa47a78c230a5afc425ea24fce73ac3'
-        self.secret_key = 'ca6a54c62aaba129c6d112888e166bdf'
-        # self.api_key = settings.WHITEBIT_API_KEY
-        # self.secret_key = settings.WHITEBIT_SECRET_KEY
+
+        self.api_key = settings.WHITEBIT_API_KEY
+        self.secret_key = settings.WHITEBIT_SECRET_KEY
         self.base_url = 'https://whitebit.com'
 
     def get_info_for_crypto(self, white_bit_currency_name: str, network: str) -> dict:
@@ -295,24 +294,24 @@ class WhiteBitApi(WhiteBitAbstract):
                                                     to_crypto=to_crypto)
 
         # start exchange
-        status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
-                                                      amount_price=amount_exchange)
+        # status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
+        #                                               amount_price=amount_exchange)
         # if status_code > 210:
         #     raise ExchangeTradeError('transfer_to_trade_balance failed')
 
         time.sleep(1)
         try:
-            status_code = self.create_stock_market(amount_price=amount_received,
+            status_code = self.create_stock_market(amount_price=amount_exchange,
                                                    market=market,
                                                    client_order_id=client_order_id,
                                                    to_crypto=to_crypto)
         except Exception as e:
-            amount_received = self._get_amount_received(amount_received=amount_received,
+            amount_received = self._get_amount_received(amount_received=amount_exchange,
                                                         market=market,
                                                         to_crypto=to_crypto,
                                                         revert=True)
 
-            status_code = self.create_stock_market(amount_price=amount_received,
+            status_code = self.create_stock_market(amount_price=amount_exchange,
                                                    market=market,
                                                    client_order_id=client_order_id,
                                                    to_crypto=to_crypto)
@@ -357,9 +356,9 @@ if __name__ == '__main__':
     wb = WhiteBitApi()
     wb.get_trade_balance()
     wb.get_main_balance()
-    # wb.create_stock_market(
-    #     market='USDT_UAH',
-    #     amount_price='800.00',
-    #     client_order_id='order-client-10')
+    wb.create_stock_market(
+        market='USDT_UAH',
+        amount_price='800.00',
+        client_order_id='order-client-10')
 
 
