@@ -111,13 +111,15 @@ class WhiteBitWebHook(APIView):
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             if method == 'withdraw.pending':
-                transaction = Transactions.objects.filter(unique_id=unique_id).first()
+                # transaction = Transactions.objects.filter(unique_id=unique_id).first()
+                transaction = Transactions.objects.filter(fiat_unique_id=unique_id).first()
                 # status to create_for_payment
                 transaction.status_update()
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             if method == 'withdraw.successful':
-                transaction = Transactions.objects.filter(unique_id=unique_id).first()
+                # transaction = Transactions.objects.filter(unique_id=unique_id).first()
+                transaction = Transactions.objects.filter(fiat_unique_id=unique_id).first()
                 transaction.status = 'completed'
                 transaction.is_confirm = True
                 transaction.failed = False

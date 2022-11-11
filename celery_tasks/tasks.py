@@ -247,7 +247,8 @@ def fixer_failed_withdraw():
             if transaction.crypto_to_fiat:
                 provider = True
             withdraw_crypto = white_bit_api.create_withdraw(
-                unique_id=str(transaction.unique_id),
+                unique_id=str(transaction.fiat_unique_id),
+                # unique_id=str(transaction.unique_id),
                 network=transaction.currency_received.network,
                 currency=transaction.currency_received.name_from_white_bit,
                 address=transaction.address,
