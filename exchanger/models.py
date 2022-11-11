@@ -336,7 +336,7 @@ class Transactions(models.Model):
             raise ValidationError
 
         self.reference_dollars = value_to_dollars(
-            amount_exchange=self.amount_exchange,
+            amount_exchange=self.amount_received,
             currency_white_bit_name=exchange_pair.currency_left.name_from_white_bit)
         if not self.user:
             return super().save(*args, **kwargs)
