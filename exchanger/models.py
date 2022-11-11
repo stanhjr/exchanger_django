@@ -275,6 +275,8 @@ class Transactions(models.Model):
 
     @property
     def market(self):
+        if self.currency_exchange.fiat:
+            return f'{self.currency_received.name_from_white_bit}_{self.currency_exchange.name_from_white_bit}'
         return f'{self.currency_exchange.name_from_white_bit}_{self.currency_received.name_from_white_bit}'
 
     @property

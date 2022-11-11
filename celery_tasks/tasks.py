@@ -243,12 +243,17 @@ def fixer_failed_withdraw():
     white_bit_api = WhiteBitApi()
     for transaction in transactions:
         try:
+            provider = None
+            if transaction.crypto_to_fiat:
+                provider = True
             withdraw_crypto = white_bit_api.create_withdraw(
                 unique_id=transaction.unique_id,
                 network=transaction.currency_received.network,
                 currency=transaction.currency_received.name_from_white_bit,
                 address=transaction.address,
-                amount_price=transaction.amount_received
+                amount_price=str(transaction.amount_received),
+                provider=provider,
+
             )
             if not withdraw_crypto:
                 transaction.try_fixed_count_error += 1

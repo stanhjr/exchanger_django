@@ -36,12 +36,12 @@ class WhiteBitWebHook(APIView):
                 transaction.status_update()
                 try:
                     self.white_bit_api.start_trading(
-                        transaction_pk=transaction.pk,
+                        transaction_pk=str(transaction.pk),
                         name_from_white_bit_exchange=transaction.currency_exchange.name_from_white_bit,
                         name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
                         market=transaction.market,
-                        amount_exchange=transaction.amount_real_exchange,
-                        amount_received=transaction.amount_received,
+                        amount_exchange=str(transaction.amount_real_exchange),
+                        amount_received=str(transaction.amount_received),
                     )
                 except ExchangeTradeError as e:
                     print(e)
@@ -52,11 +52,11 @@ class WhiteBitWebHook(APIView):
                 # status to currency_changing
                 transaction.status_update()
                 withdraw_crypto = self.white_bit_api.create_withdraw(
-                    unique_id=transaction.unique_id,
-                    network=transaction.currency_received.network_for_min_max,
-                    currency=transaction.currency_received.name_from_white_bit,
-                    address=transaction.address,
-                    amount_price=transaction.amount_received
+                    unique_id=str(transaction.unique_id),
+                    network=str(transaction.currency_received.network_for_min_max),
+                    currency=str(transaction.currency_received.name_from_white_bit),
+                    address=str(transaction.address),
+                    amount_price=str(transaction.amount_received)
                 )
                 if not withdraw_crypto:
                     transaction.failed = True
@@ -77,12 +77,12 @@ class WhiteBitWebHook(APIView):
                 transaction.status_update()
                 try:
                     self.white_bit_api.start_trading(
-                        transaction_pk=transaction.pk,
+                        transaction_pk=str(transaction.pk),
                         name_from_white_bit_exchange=transaction.currency_exchange.name_from_white_bit,
                         name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
                         market=transaction.market,
-                        amount_exchange=transaction.amount_real_exchange,
-                        amount_received=transaction.amount_received
+                        amount_exchange=str(transaction.amount_real_exchange),
+                        amount_received=str(transaction.amount_received)
                     )
                 except ExchangeTradeError as e:
                     print(e)
@@ -94,11 +94,11 @@ class WhiteBitWebHook(APIView):
                 transaction.status_update()
 
                 withdraw_crypto = self.white_bit_api.create_withdraw(
-                    unique_id=transaction.unique_id,
+                    unique_id=str(transaction.unique_id),
                     network=transaction.currency_received.network,
                     currency=transaction.currency_received.name_from_white_bit,
                     address=transaction.address,
-                    amount_price=transaction.amount_received,
+                    amount_price=str(transaction.amount_received),
                     provider=True,
                 )
                 if not withdraw_crypto:

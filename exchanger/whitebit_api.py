@@ -116,7 +116,7 @@ class WhiteBitApi(WhiteBitAbstract):
         result_list = result_dict.get('result')
         for dict_ in result_list:
             if dict_.get('name') == market:
-                return int(dict_.get('stockPrec'))
+                return int(dict_.get('moneyPrec'))
         raise ExchangeTradeError('get_stock_precision ERROR')
 
     def _get_money_precision(self, market: str) -> int:
@@ -124,11 +124,11 @@ class WhiteBitApi(WhiteBitAbstract):
         response = requests.get(url=self.base_url + request_url)
         result_dict = response.json()
         result_list = result_dict.get('result')
-        market = market.split('_')
-        market = f'{market[1]}_{market[0]}'
+        # market = market.split('_')
+        # market = f'{market[1]}_{market[0]}'
         for dict_ in result_list:
             if dict_.get('name') == market:
-                return int(dict_.get('moneyPrec'))
+                return int(dict_.get('stockPrec'))
         raise ExchangeTradeError('_get_money_precision ERROR')
 
     def get_history_from_currency(self, currency_ticker: str):
@@ -145,11 +145,16 @@ class WhiteBitApi(WhiteBitAbstract):
         result = self._get_response_dict(data=data, complete_url=self.base_url + request_url)
         print(result)
 
-    def create_stock_market(self, amount_price: str, market: str, client_order_id: str) -> int:
+    def create_stock_market(self, amount_price: str, market: str, client_order_id: str, to_crypto=None) -> int:
         request_url = '/api/v4/order/stock_market'
+        if to_crypto:
+            side = 'buy'
+        else:
+            side = 'sell'
+
         data = {
             "market": market,
-            "side": "sell",
+            "side": side,
             "clientOrderId": client_order_id,
             "amount": amount_price,
             "request": request_url,
@@ -283,7 +288,9 @@ class WhiteBitApi(WhiteBitAbstract):
         time.sleep(1)
         status_code = self.create_stock_market(amount_price=amount_received,
                                                market=market,
-                                               client_order_id=client_order_id)
+                                               client_order_id=client_order_id,
+                                               to_crypto=to_crypto)
+
         if status_code > 210:
             raise ExchangeTradeError('create_stock_market')
 
@@ -298,13 +305,13 @@ class WhiteBitApi(WhiteBitAbstract):
         return True
 
 
-wb = WhiteBitApi()
+# wb = WhiteBitApi()
 # wb.start_trading(
 #     transaction_pk='2',
 #     name_from_white_bit_exchange='UAH',
 #     name_from_white_bit_received='USDT',
-#     market='UAH_USDT',
-#     amount_exchange='500.000000000000000000000000000000',
+#     market='USDT_UAH',
+#     amount_exchange='497.000000000000000000000000000000',
 #     amount_received='11.311900000000000000000000000000',
 #     to_crypto=True
 # )
