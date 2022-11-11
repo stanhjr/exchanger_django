@@ -212,8 +212,8 @@ def fixer_failed_trade():
                 name_from_white_bit_exchange=transaction.currency_exchange.name_from_white_bit,
                 name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
                 market=transaction.market,
-                amount_exchange=transaction.amount_real_exchange,
-                amount_received=transaction.amount_received,
+                amount_exchange=str(transaction.amount_real_exchange),
+                amount_received=str(transaction.amount_received),
                 to_crypto=to_crypto,
             )
             # status to currency_changing

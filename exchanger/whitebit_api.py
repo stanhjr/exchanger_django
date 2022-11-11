@@ -6,7 +6,7 @@ import time
 from decimal import Decimal
 
 import requests
-from django.conf import settings
+# from django.conf import settings
 
 from exchanger.exchange_exceptions import ExchangeAmountMinMaxError
 from exchanger.exchange_exceptions import ExchangeTradeError
@@ -14,8 +14,10 @@ from exchanger.exchange_exceptions import ExchangeTradeError
 
 class WhiteBitAbstract:
     def __init__(self):
-        self.api_key = settings.WHITEBIT_API_KEY
-        self.secret_key = settings.WHITEBIT_SECRET_KEY
+        WHITEBIT_API_KEY = '3fa47a78c230a5afc425ea24fce73ac3'
+        WHITEBIT_SECRET_KEY = 'ca6a54c62aaba129c6d112888e166bdf'
+        self.api_key = WHITEBIT_API_KEY
+        self.secret_key = WHITEBIT_SECRET_KEY
         self.base_url = 'https://whitebit.com'
 
     def get_info_for_crypto(self, white_bit_currency_name: str, network: str) -> dict:
@@ -280,10 +282,10 @@ class WhiteBitApi(WhiteBitAbstract):
         amount_received = str(Decimal(amount_received).quantize(Decimal(received_precision)))
 
         # start exchange
-        status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
-                                                      amount_price=amount_exchange)
-        if status_code > 210:
-            raise ExchangeTradeError('transfer_to_trade_balance failed')
+        # status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
+        #                                               amount_price=amount_exchange)
+        # if status_code > 210:
+        #     raise ExchangeTradeError('transfer_to_trade_balance failed')
 
         time.sleep(1)
         status_code = self.create_stock_market(amount_price=amount_received,
@@ -304,8 +306,31 @@ class WhiteBitApi(WhiteBitAbstract):
 
         return True
 
+    def get_trade_balance(self):
+        request_url = '/api/v4/trade-account/balance'
+        data = {
+            "request": request_url,
+            "nonce": self._nonce
+        }
+        result = self._get_response_dict(data=data, complete_url=self.base_url + request_url)
+        for i, v in result.items():
+            if i == 'UAH' or i == 'USDT':
+                print(i, v)
 
-# wb = WhiteBitApi()
+    def get_main_balance(self):
+        request_url = '/api/v4/main-account/balance'
+        data = {
+            "request": request_url,
+            "nonce": self._nonce
+        }
+        result = self._get_response_dict(data=data, complete_url=self.base_url + request_url)
+        for i, v in result.items():
+            if i == 'UAH' or i == 'USDT':
+                print(i, v)
+
+
+wb = WhiteBitApi()
+wb.get_trade_balance()
 # wb.start_trading(
 #     transaction_pk='2',
 #     name_from_white_bit_exchange='UAH',
