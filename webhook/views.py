@@ -28,7 +28,7 @@ class WhiteBitWebHook(APIView):
             unique_id = params.get("uniqueId")
             wallet_address = params.get("address")
             if method == 'deposit.processed' and unique_id:
-                transaction = Transactions.objects.filter(unique_id=unique_id).first()
+                transaction = Transactions.objects.filter(fiat_unique_id=unique_id).first()
                 if not transaction:
                     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
                 transaction.hash = params.get('transactionHash')

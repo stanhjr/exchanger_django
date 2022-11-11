@@ -210,6 +210,7 @@ class ExchangeRates(models.Model):
 
 class Transactions(models.Model):
     unique_id = models.UUIDField(default=uuid.uuid4, editable=True)
+    fiat_unique_id = models.UUIDField(default=uuid.uuid4, editable=True)
     deposit_address = models.CharField(null=True, blank=True, max_length=1024)
     STATUS_CHOICES = [
         ('created', 'created'),  # created (default)

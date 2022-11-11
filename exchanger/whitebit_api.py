@@ -170,7 +170,7 @@ class WhiteBitApi(WhiteBitAbstract):
             "ticker": currency,
             "amount": amount_price,
             "address": address,
-            "uniqueId": unique_id,
+            "uniqueId": str(unique_id),
             "request": request_url,
             "nonce": self._nonce
         }
