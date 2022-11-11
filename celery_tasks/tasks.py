@@ -205,7 +205,7 @@ def fixer_failed_trade():
     for transaction in transactions:
         try:
             to_crypto = None
-            if transaction.crypto_to_fiat:
+            if not transaction.crypto_to_fiat:
                 to_crypto = True
             white_bit_api.start_trading(
                 transaction_pk=transaction.pk,
