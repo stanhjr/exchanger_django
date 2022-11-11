@@ -190,17 +190,13 @@ def send_transaction_satus(transaction_id: str, email_to: str, transaction_statu
 def transaction_to_withdraw(transaction, white_bit_api):
     from exchanger.exchange_exceptions import ExchangeTradeError
     try:
-        provider = None
-        if transaction.crypto_to_fiat:
-            provider = True
         withdraw_crypto = white_bit_api.create_withdraw(
             unique_id=str(transaction.unique_id),
             network=transaction.currency_received.network,
+            provider=str(transaction.currency_received.provider),
             currency=transaction.currency_received.name_from_white_bit,
             address=transaction.address,
             amount_price=str(transaction.amount_received + transaction.currency_exchange.commission_withdraw),
-            provider=provider,
-
         )
         if not withdraw_crypto:
             transaction.try_fixed_count_error += 1
@@ -282,16 +278,13 @@ def fixer_failed_withdraw():
     white_bit_api = WhiteBitApi()
     for transaction in transactions:
         try:
-            provider = None
-            if transaction.crypto_to_fiat:
-                provider = True
             withdraw_crypto = white_bit_api.create_withdraw(
                 unique_id=str(transaction.unique_id),
                 network=transaction.currency_received.network,
+                provider=str(transaction.currency_received.provider),
                 currency=transaction.currency_received.name_from_white_bit,
                 address=transaction.address,
                 amount_price=str(transaction.amount_received + transaction.currency_exchange.commission_withdraw),
-                provider=provider,
 
             )
             if not withdraw_crypto:

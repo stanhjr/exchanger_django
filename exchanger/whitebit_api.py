@@ -14,6 +14,8 @@ from exchanger.exchange_exceptions import ExchangeTradeError
 
 class WhiteBitAbstract:
     def __init__(self):
+        # WHITEBIT_API_KEY = '3fa47a78c230a5afc425ea24fce73ac3'
+        # WHITEBIT_SECRET_KEY = 'ca6a54c62aaba129c6d112888e166bdf'
         self.api_key = settings.WHITEBIT_API_KEY
         self.secret_key = settings.WHITEBIT_SECRET_KEY
         self.base_url = 'https://whitebit.com'
@@ -162,8 +164,8 @@ class WhiteBitApi(WhiteBitAbstract):
         }
         return self._get_response_status_code(data=data, complete_url=self.base_url + request_url)
 
-    def create_withdraw(self, amount_price: str, currency: str, address: str, unique_id: str,
-                        network: str = None, provider: bool = False):
+    def create_withdraw(self, amount_price: str, currency: str, address: str,
+                        unique_id: str, provider: str, network: str):
 
         request_url = '/api/v4/main-account/withdraw'
         data = {
@@ -174,11 +176,10 @@ class WhiteBitApi(WhiteBitAbstract):
             "request": request_url,
             "nonce": self._nonce
         }
-        print(network, 'network')
         if network:
-            data.update(network=str(network))
+            data.update(network=network)
         if provider:
-            data.update(provider=str(network))
+            data.update(provider=provider)
 
         data_json = self._get_data_json(data)
         headers = self._get_headers(data_json)

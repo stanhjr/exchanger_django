@@ -14,6 +14,7 @@ from exchanger.tools import value_to_dollars, get_zero_or_none
 class Currency(models.Model):
     name = models.CharField(max_length=100)
     network = models.CharField(max_length=10, null=True, blank=True)
+    provider = models.CharField(max_length=50, null=True, blank=True)
     name_from_white_bit = models.CharField(max_length=50, null=True, blank=True)
     image_icon = models.ImageField(upload_to='currency_images/%Y/%m/%d/', null=True, max_length=255)
     fiat = models.BooleanField(default=False)
