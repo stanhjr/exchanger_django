@@ -270,7 +270,7 @@ class WhiteBitApi(WhiteBitAbstract):
         :return: True
         """
 
-        client_order_id = f'torder-{transaction_pk}'
+        client_order_id = f'order-client-{transaction_pk}'
         amount_exchange = str(Decimal(amount_exchange).quantize(Decimal("1.00000000")))
         if to_crypto:
             received_precision = f'1.{"0" * self._get_money_precision(market=market)}'
