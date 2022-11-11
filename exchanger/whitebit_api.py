@@ -6,7 +6,7 @@ import time
 from decimal import Decimal
 
 import requests
-from django.conf import settings
+# from django.conf import settings
 
 from exchanger.exchange_exceptions import ExchangeAmountMinMaxError
 from exchanger.exchange_exceptions import ExchangeTradeError
@@ -14,10 +14,10 @@ from exchanger.exchange_exceptions import ExchangeTradeError
 
 class WhiteBitAbstract:
     def __init__(self):
-        # WHITEBIT_API_KEY = '3fa47a78c230a5afc425ea24fce73ac3'
-        # WHITEBIT_SECRET_KEY = 'ca6a54c62aaba129c6d112888e166bdf'
-        self.api_key = settings.WHITEBIT_API_KEY
-        self.secret_key = settings.WHITEBIT_SECRET_KEY
+        self.api_key = '3fa47a78c230a5afc425ea24fce73ac3'
+        self.secret_key = 'ca6a54c62aaba129c6d112888e166bdf'
+        # self.api_key = settings.WHITEBIT_API_KEY
+        # self.secret_key = settings.WHITEBIT_SECRET_KEY
         self.base_url = 'https://whitebit.com'
 
     def get_info_for_crypto(self, white_bit_currency_name: str, network: str) -> dict:
@@ -152,7 +152,7 @@ class WhiteBitApi(WhiteBitAbstract):
         if to_crypto:
             side = 'buy'
         else:
-            side = 'sell'
+            side = 'buy'
 
         data = {
             "market": market,
