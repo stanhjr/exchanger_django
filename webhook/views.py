@@ -15,11 +15,9 @@ class WhiteBitWebHook(APIView):
     http_method_names = ['post', ]
 
     def post(self, request):
-        # print(request.META.get('X-TXC-APIKEY'))
-        print(request.headers)
-        print(request.headers.get('X-TXC-APIKEY'))
-        # if request.META['X-TXC-APIKEY'] != settings.WHITEBIT_WEB_HOOK_PRIVAT_KEY:
-        #     return Response(status=status.HTTP_400_BAD_REQUEST)
+        if request.headers.get('X-TXC-APIKEY') != settings.WHITEBIT_WEB_HOOK_PUBLIC_KEY:
+            print('WHITEBIT_WEB_HOOK_PUBLIC_KEY not valid!')
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
         serializer = WhiteBitSerializer(data=request.data)
         if serializer.is_valid():
@@ -33,7 +31,7 @@ class WhiteBitWebHook(APIView):
                 transaction = Transactions.objects.filter(unique_id=unique_id).first()
                 if not transaction:
                     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
-
+                transaction.hash = params.get('transactionHash')
                 # status to payment_received
                 transaction.status_update()
                 try:
@@ -43,11 +41,12 @@ class WhiteBitWebHook(APIView):
                         name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
                         market=transaction.market,
                         amount_exchange=transaction.amount_exchange,
-                        amount_received=transaction.amount_received
+                        amount_received=transaction.amount_received,
                     )
                 except ExchangeTradeError as e:
                     print(e)
-                    transaction.save(failed_error=str(e))
+                    transaction.failed = True
+                    transaction.failed_error = str(e)
                     return Response(serializer.data, status=status.HTTP_200_OK)
 
                 # status to currency_changing
@@ -74,6 +73,7 @@ class WhiteBitWebHook(APIView):
                     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
                 # status to payment_received
+                transaction.hash = params.get('transactionHash')
                 transaction.status_update()
                 try:
                     self.white_bit_api.start_trading(
@@ -86,7 +86,8 @@ class WhiteBitWebHook(APIView):
                     )
                 except ExchangeTradeError as e:
                     print(e)
-                    transaction.save(failed_error=str(e))
+                    transaction.failed = True
+                    transaction.failed_error = str(e)
                     return Response(serializer.data, status=status.HTTP_200_OK)
 
                 # status to currency_changing

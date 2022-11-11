@@ -227,6 +227,7 @@ class Transactions(models.Model):
     amount_received = models.DecimalField(default=1,
                                           validators=[MinValueValidator(0), ],
                                           max_digits=60, decimal_places=30)
+    hash = models.CharField(max_length=1000, null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     status_time_update = models.DateTimeField(auto_now=True)
     is_confirm = models.BooleanField(default=False)
@@ -250,9 +251,9 @@ class Transactions(models.Model):
             'create_for_payment': 'withdraw_pending',
             'withdraw_pending': 'completed',
         }
-        if self.status == status_dict.get(self.status):
-            self.status = status_dict.get(self.status)
-            self.save(status_update=True)
+
+        self.status = status_dict.get(self.status)
+        self.save(status_update=True)
         send_transaction_satus.delay(email_to=self.email,
                                      transaction_id=self.unique_id,
                                      transaction_status=self.status)
