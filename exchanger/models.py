@@ -331,7 +331,7 @@ class Transactions(models.Model):
 
         self.currency_exchange = exchange_pair.currency_left
         self.currency_received = exchange_pair.currency_right
-        self.amount_received = exchange_pair.get_calculate(self.amount_real_exchange)
+        self.amount_received = exchange_pair.get_calculate(self.amount_exchange + self.currency_exchange.commission_withdraw)
 
         currency_usdt = Currency.objects.filter(name_from_white_bit='USDT').first()
         currency_uah = Currency.objects.filter(name_from_white_bit='UAH').first()

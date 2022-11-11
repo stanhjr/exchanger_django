@@ -28,6 +28,13 @@ class ExchangeIdSerializer(serializers.ModelSerializer):
 
 
 class TransactionsSerializer(serializers.ModelSerializer):
+    pairs_id = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = Transactions
+        fields = ['pairs_id', 'amount_exchange', 'email', 'address']
+        extra_kwargs = {'address': {'required': True}, 'email': {'required': True}}
+
     def validate(self, data):
         data = super().validate(data)
         address = data.get('address')
@@ -39,12 +46,6 @@ class TransactionsSerializer(serializers.ModelSerializer):
 
 
 class TransactionsFiatToCryptoSerializer(TransactionsSerializer):
-    pairs_id = serializers.IntegerField(required=True)
-
-    class Meta:
-        model = Transactions
-        fields = ['pairs_id', 'amount_exchange', 'email', 'address']
-        extra_kwargs = {'address': {'required': True}, 'email': {'required': True}}
 
     def validate(self, data):
 
