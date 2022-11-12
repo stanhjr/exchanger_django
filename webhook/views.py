@@ -9,7 +9,7 @@ from exchanger.exchange_exceptions import ExchangeTradeError
 from exchanger.models import Transactions
 from exchanger.whitebit_api import WhiteBitApi
 from webhook.serializers import WhiteBitSerializer
-from celery_tasks.tasks import send_transaction_satus
+from celery_tasks.tasks import send_transaction_satus, start_trading
 
 
 class WhiteBitWebHook(APIView):
@@ -36,91 +36,37 @@ class WhiteBitWebHook(APIView):
                     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
                 transaction.address_from = params.get('address')
                 transaction.hash = params.get('transactionHash')
+                transaction.get_deposit = True
                 amount = params.get('amount')
+
+                print('amount', amount)
                 # TODO RE CALCULATE !!!!! AMOUNT
                 # status to payment_received
                 transaction.status_update()
+                start_trading.apply_async(kwargs={"transaction_pk": transaction.pk, "to_crypto": True})
 
-                try:
-                    self.white_bit_api.start_trading(
-                        transaction_pk=str(transaction.pk),
-                        name_from_white_bit_exchange=transaction.currency_exchange.name_from_white_bit,
-                        name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
-                        market=transaction.market,
-                        amount_exchange=str(transaction.amount_real_exchange),
-                        amount_received=str(transaction.amount_real_received),
-                        to_crypto=True
-                    )
-                except ExchangeTradeError as e:
-                    print(e)
-                    transaction.failed = True
-                    transaction.failed_error = str(e)
-                    return Response(serializer.data, status=status.HTTP_200_OK)
-
-                # status to currency_changing
-                transaction.status_update()
-                withdraw_crypto = self.white_bit_api.create_withdraw(
-                    unique_id=str(transaction.unique_id),
-                    network=transaction.currency_received.network_for_min_max,
-                    provider=transaction.currency_received.provider,
-                    currency=str(transaction.currency_received.name_from_white_bit),
-                    address=str(transaction.address),
-                    amount_price=str(transaction.amount_real_received)
-                )
-                if not withdraw_crypto:
-                    transaction.failed = True
-                    transaction.save(failed_error='not withdraw_crypto')
-                    return Response(serializer.data, status=status.HTTP_200_OK)
-
-                # status to create_for_payment
-                transaction.status_update()
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             if method == 'deposit.processed' and wallet_address:
                 # CRYPTO to FIAT EXCHANGE
                 print(method)
                 print(params)
+                amount = params.get('amount')
+                print('amount', amount)
+
                 transaction = Transactions.objects.filter(deposit_address=wallet_address).first()
                 if not transaction:
                     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
                 # status to payment_received
+                transaction.get_deposit = True
                 transaction.address_from = params.get('address')
                 transaction.hash = params.get('transactionHash')
-                transaction.status_update()
-                try:
-                    self.white_bit_api.start_trading(
-                        transaction_pk=str(transaction.pk),
-                        name_from_white_bit_exchange=transaction.currency_exchange.name_from_white_bit,
-                        name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
-                        market=transaction.market,
-                        amount_exchange=str(transaction.amount_real_exchange),
-                        amount_received=str(transaction.amount_real_received)
-                    )
-                except ExchangeTradeError as e:
-                    print(e)
-                    transaction.failed = True
-                    transaction.failed_error = str(e)
-                    return Response(serializer.data, status=status.HTTP_200_OK)
 
-                # status to currency_changing
                 transaction.status_update()
 
-                withdraw_crypto = self.white_bit_api.create_withdraw(
-                    unique_id=str(transaction.unique_id),
-                    network=transaction.currency_received.network,
-                    provider=transaction.currency_received.provider,
-                    currency=transaction.currency_received.name_from_white_bit,
-                    address=transaction.address,
-                    amount_price=str(transaction.amount_real_received),
-                )
-                if not withdraw_crypto:
-                    transaction.failed = True
-                    transaction.save(failed_error='not withdraw_fiat')
-                    return Response(serializer.data, status=status.HTTP_200_OK)
+                start_trading.apply_async(kwargs={"transaction_pk": transaction.pk, "to_crypto": None})
 
-                # status to create_for_payment
-                transaction.status_update()
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             if method == 'withdraw.pending':

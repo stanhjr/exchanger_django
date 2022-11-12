@@ -218,6 +218,7 @@ class Transactions(models.Model):
     unique_id = models.UUIDField(default=uuid.uuid4, editable=True)
     fiat_unique_id = models.UUIDField(default=uuid.uuid4, editable=True)
     deposit_address = models.CharField(null=True, blank=True, max_length=1024)
+    get_deposit = models.BooleanField(default=False)
     STATUS_CHOICES = [
         ('created', 'created'),  # created (default)
         ('payment_received', 'payment_received'),  # webhook received
@@ -271,7 +272,8 @@ class Transactions(models.Model):
             'create_for_payment': 'withdraw_pending',
             'withdraw_pending': 'completed',
         }
-
+        self.failed = False
+        self.failed_error = ''
         self.status = status_dict.get(self.status)
         self.save(status_update=True)
         send_transaction_satus.delay(email_to=self.email,
