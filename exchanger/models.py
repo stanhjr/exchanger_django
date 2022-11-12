@@ -168,12 +168,13 @@ class ExchangeRates(models.Model):
                 if pair.currency_left.fiat and ticker.get('tradingPairs') == pair.fiat_market:
                     pair.value_left = 1
                     last_price = Decimal(ticker.get('lastPrice'))
+
                     commission = Decimal(1 / last_price) * redis_cache.commission_to_crypto
-                    pair.value_right = Decimal(1 / last_price) + commission
+                    pair.value_right = Decimal(1 / last_price) - commission
                 elif ticker.get('tradingPairs') == pair.market:
                     pair.value_left = 1
                     commission = Decimal(ticker.get('lastPrice')) * redis_cache.commission_to_fiat
-                    pair.value_right = Decimal(ticker.get('lastPrice')) + commission
+                    pair.value_right = Decimal(ticker.get('lastPrice')) - commission
             pair.save()
         return exchange_rates
 
@@ -201,8 +202,11 @@ class ExchangeRates(models.Model):
 
     def get_info_calculate(self, price_left: Decimal):
         from exchanger.redis_api import redis_cache
+        print(self.value_left)
+        print(self.value_right)
         value_without_commission = self._get_deposit_commission(price_left) * (self.value_left * self.value_right)
         white_bit_commission = value_without_commission * redis_cache.white_bit_commission + self.currency_right.commission_withdraw
+        print(white_bit_commission)
         result = value_without_commission - white_bit_commission
         return {"value": result,
                 "blockchain_commission": value_to_dollars(white_bit_commission,
