@@ -38,6 +38,20 @@ class ExchangeListView(generics.ListAPIView):
     queryset = ExchangeRates.objects.all()
     serializer_class = ExchangeSerializer
 
+    def list(self, request, *args, **kwargs):
+        redis_cache.cache_exchange_rates()
+        return super().list(request, *args, **kwargs)
+
+
+class ExchangeDetailView(generics.RetrieveAPIView):
+    pagination_class = None
+    queryset = ExchangeRates.objects.all()
+    serializer_class = ExchangeSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        redis_cache.cache_exchange_rates()
+        return super(ExchangeDetailView, self).retrieve(request, *args, **kwargs)
+
 
 class ExchangeCalculateView(views.APIView):
 

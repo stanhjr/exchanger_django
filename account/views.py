@@ -333,5 +333,7 @@ class UserTransactions(viewsets.ModelViewSet):
     def get_object(self):
         return self.request.user
 
-    def list(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+    # def list(self, request, *args, **kwargs):
+    #     return self.retrieve(request, *args, **kwargs)
+    #
+    # def retrieve(self, request, *args, **kwargs):

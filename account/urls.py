@@ -36,4 +36,5 @@ urlpatterns += [
     path('change-two-factor-auth/', ChangeTwoFactorView.as_view(), name='change-two-factor-auth'),
     path('change-email/', ChangeEmailView.as_view(), name='change-two-factor-auth'),
     path('user-transactions/', UserTransactions.as_view({'get': 'list'}), name='user-transactions'),
+    path('user-transactions/<uuid:uuid>/', UserTransactions.as_view({'get': 'retrieve'}), name='user-transactions-uuid'),
 ]
