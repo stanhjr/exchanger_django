@@ -363,18 +363,13 @@ if __name__ == '__main__':
     wb = WhiteBitApi()
     wb.get_trade_balance()
     wb.get_main_balance()
-    # try:
-    #     wb._transfer_to_main_balance(currency='UAH',
-    #                                  amount_received='2850.000')
-    # except ExchangeTradeError as e:
-    #     print(e, 'eee')
-    # wb.exchange_fiat_to_crypto(
-    #     market='USDT_UAH',
-    #     client_order_id='fdfffgdorder-client-10',
-    #     amount_received='20.0044000000004444400000000000'
-    # )
-    # wb.exchange_crypto_to_fiat(
-    #     market='USDT_UAH',
-    #     client_order_id='ff43fdorder-client-10',
-    #     amount_exchange='20.00'
-    # )
+# UAH {'available': '57.48913926', 'freeze': '0'}
+# USDT {'available': '0.1385', 'freeze': '0'}
+# UAH {'main_balance': '27.0993'}
+# USDT {'main_balance': '0.9998'}
+
+
+# UAH {'available': '54.27085926', 'freeze': '0'}
+# USDT {'available': '0.1385', 'freeze': '0'}
+# UAH {'main_balance': '27.0993'}
+# USDT {'main_balance': '0.9998'}
