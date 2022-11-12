@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime, timedelta
 
 from django.utils import timezone
 
@@ -330,12 +331,17 @@ class PayoutCreateView(CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
+
             if Decimal(serializer.validated_data.get('price_usdt')) <= 0:
                 return Response({'detail': 'not Zero please'}, status=400)
             if Decimal(serializer.validated_data.get('price_usdt')) > self.request.user.available_for_payment:
                 return Response({'detail': 'insufficient funds'}, status=400)
             if Payouts.objects.filter(user=self.request.user, is_confirm=False).count() > 1:
                 return Response({'detail': 'you have an open payout'}, status=400)
+            if self.request.user.reset_info_date_time > datetime.now() - timedelta(days=1):
+                return Response({'detail': f'a day must pass from the moment you reset'
+                                           f' your password or email, you reset '
+                                           f'{self.request.user.reset_info_date_time}'}, status=400)
 
             Payouts.objects.create(user=self.request.user,
                                    price_usdt=serializer.validated_data.get('price_usdt'),
