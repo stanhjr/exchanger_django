@@ -43,7 +43,7 @@ class WhiteBitWebHook(APIView):
                 # TODO RE CALCULATE !!!!! AMOUNT
                 # status to payment_received
                 transaction.status_update()
-                start_trading.apply_async(kwargs={"transaction_pk": transaction.pk, "to_crypto": True})
+                start_trading.apply_async(kwargs=dict(transaction_pk=str(transaction.pk), to_crypto=True))
 
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -65,7 +65,7 @@ class WhiteBitWebHook(APIView):
 
                 transaction.status_update()
 
-                start_trading.apply_async(kwargs={"transaction_pk": transaction.pk, "to_crypto": None})
+                start_trading.apply_async(kwargs=dict(transaction_pk=str(transaction.pk), to_crypto=None))
 
                 return Response(serializer.data, status=status.HTTP_200_OK)
 

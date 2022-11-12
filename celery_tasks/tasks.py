@@ -198,7 +198,7 @@ def create_withdraw(transaction_pk):
 
     transaction = Transactions.objects.filter(pk=transaction_pk, get_deposit=True, is_confirm=False).first()
     white_bit_api = WhiteBitApi()
-    withdraw_crypto = white_bit_api.create_withdraw(
+    withdraw= white_bit_api.create_withdraw(
         unique_id=str(transaction.unique_id),
         network=transaction.currency_received.network,
         provider=transaction.currency_received.provider,
@@ -206,7 +206,7 @@ def create_withdraw(transaction_pk):
         address=transaction.address,
         amount_price=str(transaction.amount_real_received),
     )
-    if not withdraw_crypto:
+    if not withdraw:
         transaction.failed = True
         transaction.save(failed_error='not create_withdraw')
         raise ExchangeTradeError
@@ -240,7 +240,7 @@ def transfer_to_main_balance(transaction_pk: str):
         raise ExchangeTradeError('ERROR transfer_to_main_balance failed')
     transaction.status_exchange = 'transfer_to_main'
     transaction.save()
-    create_withdraw.apply_async(eta=now() + timedelta(seconds=5), kwargs={"transaction_pk": transaction_pk})
+    create_withdraw.apply_async(eta=now() + timedelta(seconds=5), kwargs=dict(transaction_pk=str(transaction.pk)))
     return f'transfer_to_main_balance {transaction.amount_real_receive} {transaction.name_from_white_bit_received} complete'
 
 
@@ -278,7 +278,7 @@ def start_exchange(transaction_pk: str, to_crypto=None):
 
     transaction.status_exchange = 'exchange'
     transaction.status_update()
-    transfer_to_main_balance.apply_async(eta=now() + timedelta(seconds=5), kwargs={"transaction_pk": transaction_pk})
+    transfer_to_main_balance.apply_async(eta=now() + timedelta(seconds=5), kwargs=dict(transaction_pk=str(transaction.pk)))
     return f'exchange complete {transaction.unique_id} market {transaction.market} '
 
 
@@ -307,9 +307,9 @@ def start_trading(transaction_pk: str, to_crypto=None):
         transaction.failed_error = 'ERROR transfer_to_trade_balance failed'
         transaction.save()
         raise ExchangeTradeError('ERROR transfer_to_trade_balance failed')
+    start_exchange.apply_async(eta=now() + timedelta(seconds=5), kwargs=dict(transaction_pk=str(transaction.pk),
+                                                                             to_crypto=None))
 
-    start_exchange.apply_async(eta=now() + timedelta(seconds=5), kwargs={"transaction_pk": transaction_pk,
-                                                                         "to_crypto": to_crypto})
     transaction.status_exchange = 'transfer_to_trade'
     transaction.save()
     return f'transfer to trade balance {amount_exchange} {transaction.name_from_white_bit_exchange} complete'
