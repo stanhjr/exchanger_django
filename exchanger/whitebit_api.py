@@ -165,6 +165,7 @@ class WhiteBitApi(WhiteBitAbstract):
         data_json = self._get_data_json(data)
         headers = self._get_headers(data_json)
         response = requests.post(self.base_url + request_url, headers=headers, data=data_json)
+        print(data)
         print(response.json())
         if response.status_code == 201:
             return True
