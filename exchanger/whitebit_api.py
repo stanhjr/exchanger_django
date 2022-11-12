@@ -109,7 +109,11 @@ class WhiteBitApi(WhiteBitAbstract):
             "request": request_url,
             "nonce": self._nonce
         }
-        return self._get_response_status_code(data=data, complete_url=self.base_url + request_url)
+        status_code = self._get_response_status_code(data=data, complete_url=self.base_url + request_url)
+        print(status_code)
+        if status_code > 210:
+            raise ExchangeTradeError('ERROR transfer_to_main_balance failed')
+        return status_code
 
     def _get_stock_precision(self, market: str) -> int:
         request_url = '/api/v2/public/markets'
@@ -295,11 +299,12 @@ class WhiteBitApi(WhiteBitAbstract):
         amount_exchange = str(Decimal(amount_exchange).quantize(Decimal("1.00000000")))
 
         # start exchange
-        status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
-                                                      amount_exchange=amount_exchange)
-        if status_code > 210:
-            print('transfer_to_trade_balance', status_code)
-            raise ExchangeTradeError('ERROR transfer_to_trade_balance failed')
+        # status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
+        #                                               amount_exchange=amount_exchange)
+        # if status_code > 210:
+        #     print('transfer_to_trade_balance', status_code)
+        #     raise ExchangeTradeError('ERROR transfer_to_trade_balance failed')
+        # print('transfer_to_trade_balance', status_code)
 
         time.sleep(1)
 
@@ -358,8 +363,11 @@ if __name__ == '__main__':
     wb = WhiteBitApi()
     wb.get_trade_balance()
     wb.get_main_balance()
-    # wb._transfer_to_main_balance(currency='UAH',
-    #                             amount_price='850.000')
+    try:
+        wb._transfer_to_main_balance(currency='UAH',
+                                     amount_received='2850.000')
+    except ExchangeTradeError as e:
+        print(e, 'eee')
     # wb.exchange_fiat_to_crypto(
     #     market='USDT_UAH',
     #     client_order_id='fdfffgdorder-client-10',

@@ -36,6 +36,8 @@ class WhiteBitWebHook(APIView):
                     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
                 transaction.address_from = params.get('address')
                 transaction.hash = params.get('transactionHash')
+                amount = params.get('amount')
+                # TODO RE CALCULATE !!!!! AMOUNT
                 # status to payment_received
                 transaction.status_update()
 
