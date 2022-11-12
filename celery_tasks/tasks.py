@@ -241,7 +241,7 @@ def transfer_to_main_balance(self, transaction_pk: str):
     transaction.status_exchange = 'transfer_to_main'
     transaction.save()
     create_withdraw.apply_async(eta=now() + timedelta(seconds=5), kwargs=dict(transaction_pk=str(transaction.pk)))
-    return f'transfer_to_main_balance {transaction.amount_real_receive} {transaction.name_from_white_bit_received} complete'
+    return f'transfer_to_main_balance {transaction.amount_real_received} {transaction.name_from_white_bit_received} complete'
 
 
 @app.task(bind=BaseTaskWithRetry)
