@@ -232,7 +232,7 @@ def transfer_to_main_balance(self, transaction_pk: str):
     white_bit_api = WhiteBitApi()
 
     status_code = white_bit_api.transfer_to_main_balance(currency=transaction.currency_received.name_from_white_bit,
-                                                         amount_received=transaction.amount_real_received)
+                                                         amount_received=str(transaction.amount_real_received))
     if status_code > 210:
         print('transfer_to_main_balance', status_code)
         transaction.failed = True
@@ -312,4 +312,4 @@ def start_trading(self, transaction_pk: str, to_crypto=None):
 
     transaction.status_exchange = 'transfer_to_trade'
     transaction.save()
-    return f'transfer to trade balance {amount_exchange} {transaction.name_from_white_bit_exchange} complete'
+    return f'transfer to trade balance {amount_exchange} {transaction.currency_exchange.name_from_white_bit} complete'

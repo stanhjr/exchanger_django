@@ -48,10 +48,11 @@ class ExchangeCalculateView(views.APIView):
         """
         serializer = CalculateSerializer(data=self.request.query_params)
         if serializer.is_valid():
-            from celery_tasks.tasks import start_trading
+            from celery_tasks.tasks import start_trading, transfer_to_main_balance
             from exchanger.models import Transactions
             tran = Transactions.objects.filter(unique_id='9db93425-0267-42be-9192-60759677c746').first()
             redis_cache.cache_exchange_rates()
+            transfer_to_main_balance.apply_async(kwargs=dict(transaction_pk=tran.pk, to_crypto=True))
             start_trading.apply_async(kwargs=dict(transaction_pk=tran.pk, to_crypto=True))
             pairs_model = ExchangeRates.objects.filter(id=serializer.data.get("pairs_id")).first()
             if not pairs_model:
