@@ -356,11 +356,11 @@ if __name__ == '__main__':
     wb.get_main_balance()
     # wb._transfer_to_main_balance(currency='UAH',
     #                             amount_price='850.000')
-    wb.exchange_fiat_to_crypto(
-        market='USDT_UAH',
-        client_order_id='fdfffgdorder-client-10',
-        amount_received='20.0044000000004444400000000000'
-    )
+    # wb.exchange_fiat_to_crypto(
+    #     market='USDT_UAH',
+    #     client_order_id='fdfffgdorder-client-10',
+    #     amount_received='20.0044000000004444400000000000'
+    # )
     # wb.exchange_crypto_to_fiat(
     #     market='USDT_UAH',
     #     client_order_id='ff43fdorder-client-10',

@@ -193,7 +193,7 @@ def transaction_to_withdraw(transaction, white_bit_api):
         withdraw_crypto = white_bit_api.create_withdraw(
             unique_id=str(transaction.unique_id),
             network=transaction.currency_received.network,
-            provider=str(transaction.currency_received.provider),
+            provider=transaction.currency_received.provider,
             currency=transaction.currency_received.name_from_white_bit,
             address=transaction.address,
             amount_price=str(transaction.amount_received + transaction.currency_exchange.commission_withdraw),
@@ -250,14 +250,14 @@ def fixer_failed_trade():
             transaction.failed_error = None
             transaction.try_fixed_count_error = 0
             transaction.status_update()
+            transaction_to_withdraw(transaction=transaction,
+                                    white_bit_api=white_bit_api)
             return 'Fixed trade'
         except ExchangeTradeError as e:
             print(e)
             transaction.try_fixed_count_error += 1
             transaction.failed_error = str(e)
             transaction.save(failed_error=True)
-            transaction_to_withdraw(transaction=transaction,
-                                    white_bit_api=white_bit_api)
             return 'Retry trade'
 
 
@@ -281,7 +281,7 @@ def fixer_failed_withdraw():
             withdraw_crypto = white_bit_api.create_withdraw(
                 unique_id=str(transaction.unique_id),
                 network=transaction.currency_received.network,
-                provider=str(transaction.currency_received.provider),
+                provider=transaction.currency_received.provider,
                 currency=transaction.currency_received.name_from_white_bit,
                 address=transaction.address,
                 amount_price=str(transaction.amount_received + transaction.currency_exchange.commission_withdraw),

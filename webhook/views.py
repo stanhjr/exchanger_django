@@ -58,8 +58,8 @@ class WhiteBitWebHook(APIView):
                 transaction.status_update()
                 withdraw_crypto = self.white_bit_api.create_withdraw(
                     unique_id=str(transaction.unique_id),
-                    network=str(transaction.currency_received.network_for_min_max),
-                    provider=str(transaction.currency_received.provider),
+                    network=transaction.currency_received.network_for_min_max,
+                    provider=transaction.currency_received.provider,
                     currency=str(transaction.currency_received.name_from_white_bit),
                     address=str(transaction.address),
                     amount_price=str(Decimal(transaction.amount_received) + Decimal(transaction.currency_received.commission_withdraw))
@@ -105,7 +105,7 @@ class WhiteBitWebHook(APIView):
                 withdraw_crypto = self.white_bit_api.create_withdraw(
                     unique_id=str(transaction.unique_id),
                     network=transaction.currency_received.network,
-                    provider=str(transaction.currency_received.provider),
+                    provider=transaction.currency_received.provider,
                     currency=transaction.currency_received.name_from_white_bit,
                     address=transaction.address,
                     amount_price=str(Decimal(transaction.amount_received) + Decimal(transaction.currency_received.commission_withdraw)),
