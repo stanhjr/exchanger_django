@@ -226,6 +226,14 @@ class Transactions(models.Model):
         ('withdraw_pending', 'withdraw_pending'),  # withdraw pending
         ('completed', 'completed'),  # completed
     ]
+    EXCHANGE_CHOICES = [
+        ('created', 'created'),
+        ('transfer_to_trade', 'transfer_to_trade'),
+        ('exchange', 'exchange'),
+        ('transfer_to_main', 'transfer_to_main'),
+        ('create_withdraw', 'create_withdraw')
+    ]
+    status_exchange = models.CharField(choices=EXCHANGE_CHOICES, default='created', max_length=100)
     status = models.CharField(choices=STATUS_CHOICES, default='created', max_length=30)
     user = models.ForeignKey(CustomUser, related_name='transactions', on_delete=models.DO_NOTHING, blank=True,
                              null=True)
