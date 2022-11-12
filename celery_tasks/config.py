@@ -28,6 +28,9 @@ config = {
         'celery_tasks.tasks.create_withdraw': {
             'queue': 'exchange'
         },
+        'celery_tasks.tasks.cleaner_unused_transactions': {
+            'queue': 'exchange'
+        },
 
     },
     'accept_content': ['json', 'application/x-python-serialize'],

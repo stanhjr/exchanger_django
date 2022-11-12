@@ -10,6 +10,7 @@ from email.mime.text import MIMEText
 from django.conf import settings
 from jinja2 import Template
 from celery import Celery, Task
+from celery.schedules import crontab
 
 from .config import config
 
@@ -31,6 +32,15 @@ class BaseTaskWithRetry(Task):
     retry_backoff = False
     retry_backoff_max = 700
     retry_jitter = False
+
+
+@app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    # Execute daily at midnight
+    sender.add_periodic_task(
+        crontab(hour=0, minute=0),
+        cleaner_unused_transactions.s('Happy Mondays!'),
+    )
 
 
 def generate_key() -> str:
@@ -208,7 +218,8 @@ def create_withdraw(self, transaction_pk):
     )
     if not withdraw:
         transaction.failed = True
-        transaction.save(failed_error='not create_withdraw')
+        transaction.failed_error = 'not create_withdraw'
+        transaction.save()
         raise ExchangeTradeError
     transaction.status_exchange = 'create_withdraw'
     transaction.status_update()
@@ -237,6 +248,7 @@ def transfer_to_main_balance(self, transaction_pk: str):
         print('transfer_to_main_balance', status_code)
         transaction.failed = True
         transaction.failed_error = 'ERROR transfer_to_main_balance failed'
+        transaction.save()
         raise ExchangeTradeError('ERROR transfer_to_main_balance failed')
     transaction.status_exchange = 'transfer_to_main'
     transaction.save()
@@ -274,11 +286,15 @@ def start_exchange(self, transaction_pk: str, to_crypto=None):
         )
     if status_code > 210:
         print('exchange_fiat_to_crypto ERROR', status_code)
+        transaction.failed = True
+        transaction.failed_error = 'ERROR exchange API'
+        transaction.save()
         raise ExchangeTradeError('ERROR exchange API')
 
     transaction.status_exchange = 'exchange'
     transaction.status_update()
-    transfer_to_main_balance.apply_async(eta=now() + timedelta(seconds=5), kwargs=dict(transaction_pk=str(transaction.pk)))
+    transfer_to_main_balance.apply_async(eta=now() + timedelta(seconds=5),
+                                         kwargs=dict(transaction_pk=str(transaction.pk)))
     return f'exchange complete {transaction.unique_id} market {transaction.market} '
 
 
@@ -313,3 +329,12 @@ def start_trading(self, transaction_pk: str, to_crypto=None):
     transaction.status_exchange = 'transfer_to_trade'
     transaction.save()
     return f'transfer to trade balance {amount_exchange} {transaction.currency_exchange.name_from_white_bit} complete'
+
+
+@app.task
+def cleaner_unused_transactions():
+    from exchanger.models import Transactions
+    from datetime import datetime, timedelta
+    transactions = Transactions.objects.filter(get_deposit=False, created_at__lte=datetime.now() - timedelta(days=1))
+    transactions.delete()
+    return 'cleaner unused transactions complete'
