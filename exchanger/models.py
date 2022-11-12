@@ -247,8 +247,8 @@ class Transactions(models.Model):
     reference_dollars = models.DecimalField(null=True, blank=True, max_digits=60, decimal_places=30)
     address = models.CharField(max_length=1000)
     email = models.EmailField(null=True)
-    address_from = models.CharField(null=True, blank=True)
-    address_to = models.CharField(null=True, blank=True)
+    address_from = models.CharField(null=True, blank=True, max_length=200)
+    address_to = models.CharField(null=True, blank=True, max_length=200)
 
     class Meta:
         verbose_name = 'Transactions'
