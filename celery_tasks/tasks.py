@@ -190,7 +190,7 @@ def send_transaction_satus(transaction_id: str, email_to: str, transaction_statu
 # =============================================== TASK EXCHANGE =================================
 
 @app.task(bind=BaseTaskWithRetry)
-def create_withdraw(transaction_pk):
+def create_withdraw(self, transaction_pk):
     print('create_withdraw START')
     from exchanger.whitebit_api import WhiteBitApi
     from exchanger.exchange_exceptions import ExchangeTradeError
@@ -216,7 +216,7 @@ def create_withdraw(transaction_pk):
 
 
 @app.task(bind=BaseTaskWithRetry)
-def transfer_to_main_balance(transaction_pk: str):
+def transfer_to_main_balance(self, transaction_pk: str):
     print('transfer_to_main_balance START')
     from datetime import timedelta
     from django.utils.timezone import now
@@ -245,7 +245,7 @@ def transfer_to_main_balance(transaction_pk: str):
 
 
 @app.task(bind=BaseTaskWithRetry)
-def start_exchange(transaction_pk: str, to_crypto=None):
+def start_exchange(self, transaction_pk: str, to_crypto=None):
     print('start_exchange START')
     from datetime import timedelta
     from django.utils.timezone import now
@@ -283,7 +283,7 @@ def start_exchange(transaction_pk: str, to_crypto=None):
 
 
 @app.task(bind=BaseTaskWithRetry)
-def start_trading(transaction_pk: str, to_crypto=None):
+def start_trading(self, transaction_pk: str, to_crypto=None):
     print('start_trading START')
     from datetime import timedelta
     from django.utils.timezone import now
@@ -308,7 +308,7 @@ def start_trading(transaction_pk: str, to_crypto=None):
         transaction.save()
         raise ExchangeTradeError('ERROR transfer_to_trade_balance failed')
     start_exchange.apply_async(eta=now() + timedelta(seconds=5), kwargs=dict(transaction_pk=str(transaction.pk),
-                                                                             to_crypto=None))
+                                                                             to_crypto=to_crypto))
 
     transaction.status_exchange = 'transfer_to_trade'
     transaction.save()
