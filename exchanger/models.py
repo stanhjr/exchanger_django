@@ -268,6 +268,10 @@ class Transactions(models.Model):
         verbose_name_plural = 'Transaction'
         ordering = ['-created_at', 'is_confirm']
 
+    @property
+    def complete(self):
+        return self.is_confirm
+
     def status_update(self) -> None:
         status_dict = {
             'created': 'payment_received',

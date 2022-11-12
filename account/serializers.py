@@ -216,4 +216,5 @@ class UserTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transactions
         fields = ['transaction_date', 'status', 'currency_exchange', 'currency_received',
-                  'amount_exchange', 'amount_received', 'created_at', 'address']
+                  'amount_exchange', 'amount_real_received', 'created_at', 'address',
+                  'address_from', 'address_to', 'get_deposit', 'complete', 'unique_id']
