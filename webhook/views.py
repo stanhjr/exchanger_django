@@ -33,6 +33,8 @@ class WhiteBitWebHook(APIView):
                 transaction = Transactions.objects.filter(fiat_unique_id=unique_id).first()
                 if not transaction:
                     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
+                transaction.address_from = params.get('address')
                 transaction.hash = params.get('transactionHash')
                 # status to payment_received
                 transaction.status_update()
@@ -77,6 +79,7 @@ class WhiteBitWebHook(APIView):
                     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
                 # status to payment_received
+                transaction.address_from = params.get('address')
                 transaction.hash = params.get('transactionHash')
                 transaction.status_update()
                 try:

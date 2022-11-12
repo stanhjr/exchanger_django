@@ -89,6 +89,7 @@ class TransactionsCryptoToFiatView(generics.CreateAPIView):
                                        amount_exchange=serializer.data.get("amount_exchange"),
                                        email=serializer.data.get("email"),
                                        address=serializer.data.get("address"),
+                                       address_to=serializer.data.get("address"),
                                        )
 
             white_bit_api = WhiteBitApi()
@@ -142,6 +143,7 @@ class TransactionsFiatToCryptoView(generics.CreateAPIView):
                                        amount_exchange=serializer.data.get("amount_exchange"),
                                        email=serializer.data.get("email"),
                                        address=serializer.data.get("address"),
+                                       address_to=serializer.data.get("address"),
                                        )
 
             try:
