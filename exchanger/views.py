@@ -49,8 +49,10 @@ class ExchangeCalculateView(views.APIView):
         serializer = CalculateSerializer(data=self.request.query_params)
         if serializer.is_valid():
             from celery_tasks.tasks import start_trading
+            from exchanger.models import Transactions
+            tran = Transactions.objects.filter(unique_id='9db93425-0267-42be-9192-60759677c746').first()
             redis_cache.cache_exchange_rates()
-            start_trading.apply_async(kwargs=dict(transaction_pk='9db93425-0267-42be-9192-60759677c746', to_crypto=True))
+            start_trading.apply_async(kwargs=dict(transaction_pk=tran.pk, to_crypto=True))
             pairs_model = ExchangeRates.objects.filter(id=serializer.data.get("pairs_id")).first()
             if not pairs_model:
                 return Response({'detail': 'not found pairs'}, status=404)
