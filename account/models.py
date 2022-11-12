@@ -26,11 +26,13 @@ class CustomUser(AbstractUser):
     inviter_token = models.CharField(max_length=150, null=True, blank=True)
     last_action = models.DateTimeField(default=timezone.now)
     is_confirmed = models.BooleanField(default=False)
-    cents = models.BigIntegerField(default=0)
+
     paid_from_referral = models.DecimalField(default=0.00, validators=[MinValueValidator(0), ],
                                              max_digits=60, decimal_places=2)
     verify_code = models.CharField(default='', max_length=100, null=True, blank=True)
     reset_password_code = models.CharField(default='', max_length=100, null=True, blank=True)
+
+    reset_info_date_time = models.DateTimeField(null=True, blank=True)
 
     class RefLevel(models.IntegerChoices):
         Level_1 = 1
@@ -42,8 +44,12 @@ class CustomUser(AbstractUser):
     level = models.IntegerField(choices=RefLevel.choices, blank=True, null=True, default=1)
 
     @property
-    def wallet(self):
-        return Decimal(self.cents / 100)
+    def available_for_payment(self) -> Decimal:
+        all_payouts = Payouts.objects.filter(user=self).aggregate(Sum('price_usdt'))
+
+        if all_payouts.get('price_usdt__sum'):
+            return self.paid_from_referral - Decimal(all_payouts.get('price_usdt__sum'))
+        return self.paid_from_referral
 
     @property
     def referral_url(self):
@@ -72,8 +78,8 @@ class CustomUser(AbstractUser):
 
     @property
     def total_sum_from_referral(self):
-        invited_users = CustomUser.objects.filter(inviter_token=self.pk).all().\
-            prefetch_related('transactions').filter(transactions__is_confirm=True).\
+        invited_users = CustomUser.objects.filter(inviter_token=self.pk).all(). \
+            prefetch_related('transactions').filter(transactions__is_confirm=True). \
             aggregate(Sum('transactions__reference_dollars'))
 
         return get_zero_or_none(invited_users.get('transactions__reference_dollars__sum'))
@@ -88,19 +94,21 @@ class CustomUser(AbstractUser):
         if profit_model:
             return profit_model.profit_percent / 100
 
-    def set_level(self, commit=True):
+    def set_level(self, save=True):
         from exchanger.models import ProfitModel
         sum_dollars_refers_per_month = self._get_sum_dollars_refers_per_month(self)
         if sum_dollars_refers_per_month is None:
             return
+
         profit_model = ProfitModel.objects.filter(price_dollars__lte=sum_dollars_refers_per_month,
                                                   level__gt=self.level).first()
+        if not profit_model:
+            return
 
-        if profit_model:
-            self.level = profit_model.level
-            if commit:
-                self.save()
-            return self.level
+        self.level = profit_model.level
+        if save:
+            self.save()
+        return self.level
 
     def get_percent_profit_price(self, price) -> Decimal:
         from exchanger.models import ProfitModel, ProfitTotal
@@ -110,6 +118,10 @@ class CustomUser(AbstractUser):
             result = price * profit_model.profit_percent_coef * percent_total.profit_percent
             return Decimal(result)
         return Decimal(price * 0)
+
+    def save(self, *args, **kwargs):
+        self.last_action = timezone.now()
+        return super().save(*args, **kwargs)
 
 
 class ReferralRelationship(models.Model):
@@ -144,3 +156,16 @@ def post_save_function(sender, instance, **kwargs):
                 referral.save()
     except ValidationError as e:
         print(e)
+
+
+class Payouts(models.Model):
+    user = models.ForeignKey(CustomUser, related_name='payouts', on_delete=models.DO_NOTHING)
+    price_usdt = models.DecimalField(default=0.00, validators=[MinValueValidator(0), ], max_digits=8, decimal_places=5)
+    is_confirm = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.user} -> {self.price_usdt}'
+
+    def clean(self):
+        if self.price_usdt > self.user.available_for_payment:
+            raise ValidationError('insufficient funds')

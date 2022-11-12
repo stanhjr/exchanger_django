@@ -9,7 +9,10 @@ from account.views import (
     ChangePasswordView,
     ChangeTwoFactorView,
     ChangeEmailView,
-    ResetPasswordWithCodeView, LoginRefreshView, UserTransactions
+    ResetPasswordWithCodeView,
+    LoginRefreshView,
+    UserTransactions,
+    PayoutCreateView
 )
 from account.views import UserRefAnalyticsView
 from account.views import UserViewSet
@@ -36,5 +39,7 @@ urlpatterns += [
     path('change-two-factor-auth/', ChangeTwoFactorView.as_view(), name='change-two-factor-auth'),
     path('change-email/', ChangeEmailView.as_view(), name='change-two-factor-auth'),
     path('user-transactions/', UserTransactions.as_view({'get': 'list'}), name='user-transactions'),
-    path('user-transactions/<uuid:unique_id>/', UserTransactions.as_view({'get': 'retrieve'}), name='user-transactions-uuid'),
+    path('user-transactions/<uuid:unique_id>/', UserTransactions.as_view({'get': 'retrieve'}), name='trans-uuid'),
+    path('create-referral-payout/', PayoutCreateView.as_view(), name='create-referral-payout'),
+
 ]

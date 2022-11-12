@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from django.utils import timezone
+
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, viewsets, status, views
 from rest_framework.generics import CreateAPIView, UpdateAPIView
@@ -8,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from account.models import CustomUser
+from account.models import CustomUser, Payouts
 from account import schema
 
 from account.serializers import (
@@ -26,7 +28,7 @@ from account.serializers import (
     ResetPasswordWithCodeSerializer,
     CustomTokenRefreshSerializer,
     SignUpConfirmSerializer,
-    UserTransactionSerializer,
+    UserTransactionSerializer, CreatePayoutSerializer,
 )
 
 from celery_tasks.tasks import (
@@ -214,26 +216,6 @@ class SendChangePasswordCodeView(UpdateAPIView):
         return Response({'detail': 'not valid email'}, status=404)
 
 
-class ResetPasswordWithCodeView(UpdateAPIView):
-    serializer_class = ResetPasswordWithCodeSerializer
-    model = CustomUser
-
-    def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-
-        if serializer.is_valid():
-            response = {
-                'status': 'success',
-                'code': status.HTTP_200_OK,
-                'message': 'Password updated successfully',
-                'data': []
-            }
-
-            return Response(response)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class ChangePasswordView(UpdateAPIView):
     serializer_class = ChangePasswordSerializer
     model = CustomUser
@@ -308,6 +290,7 @@ class ChangeEmailView(UpdateAPIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             user.email = serializer.data.get("new_email")
+            user.reset_info_date_time = timezone.now()
             user.save()
             response = {
                 'status': 'success',
@@ -337,3 +320,24 @@ class UserTransactions(viewsets.ModelViewSet):
     #     return self.retrieve(request, *args, **kwargs)
     #
     # def retrieve(self, request, *args, **kwargs):
+
+
+class PayoutCreateView(CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Payouts.objects.all()
+    serializer_class = CreatePayoutSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            if Decimal(serializer.validated_data.get('price_usdt')) <= 0:
+                return Response({'detail': 'not Zero please'}, status=400)
+            if Decimal(serializer.validated_data.get('price_usdt')) > self.request.user.available_for_payment:
+                return Response({'detail': 'insufficient funds'}, status=400)
+            if Payouts.objects.filter(user=self.request.user, is_confirm=False).count() > 1:
+                return Response({'detail': 'you have an open payout'}, status=400)
+
+            Payouts.objects.create(user=self.request.user,
+                                   price_usdt=serializer.validated_data.get('price_usdt'),
+                                   )
+            return Response({'detail': 'payout created!'}, status=status.HTTP_200_OK)

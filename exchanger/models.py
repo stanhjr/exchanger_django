@@ -334,22 +334,25 @@ class Transactions(models.Model):
         else:
             return f'AnonymousUser | {self.currency_exchange} -> {self.currency_received} | {self.amount_exchange}'
 
-    def save(self, pairs_id=None, is_confirm=True, status_update=None, failed_error=None, *args, **kwargs):
+    def save(self, pairs_id=None, status_update=None, failed_error=None, *args, **kwargs):
         if status_update:
             return super().save(*args, **kwargs)
+
         if failed_error:
             return super().save(*args, **kwargs)
 
-        if is_confirm:
-            if not self.user:
-                inviter = None
-            else:
-                inviter = CustomUser.get_inviter(self.user.inviter_token)
-            if self.is_confirm and inviter:
-                inviter.wallet += self.user.get_percent_profit_price(self.currency_exchange)
-                inviter.set_level(commit=False)
-                inviter.save()
+        if self.is_confirm and not self.user:
+            return super().save(*args, **kwargs)
+
+        if self.is_confirm and self.user:
+            inviter = CustomUser.get_inviter(self.user.inviter_token)
+            if not inviter:
                 return super().save(*args, **kwargs)
+
+            inviter.paid_from_referral += self.user.get_percent_profit_price(self.reference_dollars)
+            inviter.set_level(save=False)
+            inviter.save()
+            return super().save(*args, **kwargs)
 
         if not pairs_id:
             return super().save(*args, **kwargs)
@@ -377,7 +380,7 @@ class Transactions(models.Model):
         if not self.user:
             return super().save(*args, **kwargs)
 
-        self.currency_exchange = self.currency_exchange - self.user.get_percent_profit_price(self.currency_exchange)
+        # self.currency_exchange = self.currency_exchange - self.user.get_percent_profit_price(self.currency_exchange)
 
         return super().save(*args, **kwargs)
 

@@ -1,4 +1,7 @@
+from decimal import Decimal
+
 from django.contrib.auth.hashers import make_password
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
@@ -6,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from account.exception_custom import TwoFactorAuthException
-from account.models import CustomUser
+from account.models import CustomUser, Payouts
 from celery_tasks.tasks import generate_key, send_verify_code_to_email
 from exchanger.models import Transactions
 
@@ -31,8 +34,9 @@ class SignUpSerializer(serializers.ModelSerializer):
 class GetUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['email', 'username', 'referral_url', 'wallet', 'level', 'sum_refers_eq_usdt', 'is_confirmed',
-                  'two_factor_auth']
+        fields = ['email', 'username', 'referral_url', 'paid_from_referral',
+                  'level', 'sum_refers_eq_usdt', 'is_confirmed', 'two_factor_auth', 'available_for_payment'
+                  ]
 
 
 class CustomTokenRefreshSerializer(TokenRefreshSerializer):
@@ -93,6 +97,7 @@ class ResetPasswordWithCodeSerializer(serializers.Serializer):
             )
         user.set_password(data.get("new_password"))
         user.reset_password_code = ''
+        user.reset_info_date_time = timezone.now()
         user.save()
         return data
 
@@ -134,7 +139,6 @@ class UserBonusCalculateSerializer(serializers.Serializer):
 
 
 class UserAnalyticsSerializer(serializers.ModelSerializer):
-    available_for_payment = serializers.CharField(source='wallet')
 
     class Meta:
         model = CustomUser
@@ -218,3 +222,10 @@ class UserTransactionSerializer(serializers.ModelSerializer):
         fields = ['transaction_date', 'status', 'currency_exchange', 'currency_received',
                   'amount_exchange', 'amount_real_received', 'created_at', 'address',
                   'address_from', 'address_to', 'get_deposit', 'complete', 'unique_id']
+
+
+class CreatePayoutSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Payouts
+        fields = ['price_usdt', ]
