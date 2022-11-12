@@ -16,12 +16,6 @@ config = {
         'celery_tasks.tasks.send_transaction_satus': {
             'queue': 'celery_tasks'
         },
-        # 'celery_tasks.tasks.fixer_failed_trade': {
-        #     'queue': 'update_rates'
-        # },
-        # 'celery_tasks.tasks.fixer_failed_withdraw': {
-        #     'queue': 'update_rates'
-        # },
         'celery_tasks.tasks.transfer_to_main_balance': {
             'queue': 'exchange'
         },

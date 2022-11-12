@@ -42,12 +42,6 @@ def generate_key() -> str:
     return binascii.hexlify(os.urandom(20)).decode()
 
 
-@app.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(120.0, fixer_failed_withdraw.s(), name='fixer_failed_withdraw')
-    sender.add_periodic_task(120.0, fixer_failed_trade.s(), name='fixer_failed_trade')
-
-
 @app.task
 def send_registration_link_to_email(code: str, email_to: str, subject: str):
     text = f"""\
@@ -191,124 +185,6 @@ def send_transaction_satus(transaction_id: str, email_to: str, transaction_statu
         print("Email sent successfully!")
     except Exception as ex:
         print("Something went wrong….", ex)
-
-
-# def transaction_to_withdraw(transaction, white_bit_api):
-#     from exchanger.exchange_exceptions import ExchangeTradeError
-#     try:
-#         withdraw_crypto = white_bit_api.create_withdraw(
-#             unique_id=str(transaction.unique_id),
-#             network=transaction.currency_received.network,
-#             provider=transaction.currency_received.provider,
-#             currency=transaction.currency_received.name_from_white_bit,
-#             address=transaction.address,
-#             amount_price=str(transaction.amount_real_received),
-#         )
-#         if not withdraw_crypto:
-#             transaction.try_fixed_count_error += 1
-#             transaction.save(failed_error=transaction.failed_error)
-#             return 'Retry withdraw'
-#         # status to create_for_payment
-#         transaction.failed = False
-#         transaction.failed_error = None
-#         transaction.try_fixed_count_error = 0
-#         transaction.status_update()
-#         return 'Fixed failed withdraw'
-#     except ExchangeTradeError as e:
-#         print(e)
-#         transaction.try_fixed_count_error += 1
-#         transaction.failed_error = str(e)
-#         transaction.save(failed_error=True)
-#         return 'Retry trade'
-#
-#
-# @app.task
-# def fixer_failed_trade():
-#     from exchanger.models import Transactions
-#     from exchanger.whitebit_api import WhiteBitApi
-#     from exchanger.exchange_exceptions import ExchangeTradeError
-#     from django.utils import timezone
-#     from datetime import timedelta
-#
-#     transactions = Transactions.objects.filter(failed=True,
-#                                                status='payment_received',
-#                                                try_fixed_count_error__lte=4,
-#                                                status_time_update__lte=timezone.now() - timedelta(seconds=60)).all()
-#     if not transactions:
-#         return
-#     white_bit_api = WhiteBitApi()
-#     for transaction in transactions:
-#         try:
-#             to_crypto = None
-#             if not transaction.crypto_to_fiat:
-#                 to_crypto = True
-#             white_bit_api.start_trading(
-#                 transaction_pk=transaction.pk,
-#                 name_from_white_bit_exchange=transaction.currency_exchange.name_from_white_bit,
-#                 name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
-#                 market=transaction.market,
-#                 amount_exchange=str(transaction.amount_real_exchange),
-#                 amount_received=str(transaction.amount_received),
-#                 to_crypto=to_crypto,
-#             )
-#             # status to currency_changing
-#             transaction.failed = False
-#             transaction.failed_error = None
-#             transaction.try_fixed_count_error = 0
-#             transaction.status_update()
-#             transaction_to_withdraw(transaction=transaction,
-#                                     white_bit_api=white_bit_api)
-#             return 'Fixed trade'
-#         except ExchangeTradeError as e:
-#             print(e)
-#             transaction.try_fixed_count_error += 1
-#             transaction.failed_error = str(e)
-#             transaction.save(failed_error=True)
-#             return 'Retry trade'
-
-
-# @app.task
-# def fixer_failed_withdraw():
-#     from exchanger.models import Transactions
-#     from exchanger.whitebit_api import WhiteBitApi
-#     from exchanger.exchange_exceptions import ExchangeTradeError
-#     from django.utils import timezone
-#     from datetime import timedelta
-#
-#     transactions = Transactions.objects.filter(failed=True,
-#                                                status='currency_changing',
-#                                                try_fixed_count_error__lte=4,
-#                                                status_time_update__lte=timezone.now() - timedelta(seconds=60)).all()
-#     if not transactions:
-#         return
-#     white_bit_api = WhiteBitApi()
-#     for transaction in transactions:
-#         try:
-#             withdraw_crypto = white_bit_api.create_withdraw(
-#                 unique_id=str(transaction.unique_id),
-#                 network=transaction.currency_received.network,
-#                 provider=transaction.currency_received.provider,
-#                 currency=transaction.currency_received.name_from_white_bit,
-#                 address=transaction.address,
-#                 amount_price=str(transaction.amount_received + transaction.currency_exchange.commission_withdraw),
-#
-#             )
-#             if not withdraw_crypto:
-#                 transaction.try_fixed_count_error += 1
-#                 transaction.save(failed_error=transaction.failed_error)
-#                 return 'Retry withdraw'
-#             # status to create_for_payment
-#             transaction.failed = False
-#             transaction.failed_error = None
-#             transaction.try_fixed_count_error = 0
-#             transaction.status_update()
-#             return 'Fixed failed withdraw'
-#         except ExchangeTradeError as e:
-#             print(e)
-#             transaction.try_fixed_count_error += 1
-#             transaction.failed_error = str(e)
-#             transaction.save(failed_error=True)
-#             return 'Retry trade'
 
 
 # =============================================== TASK EXCHANGE =================================
