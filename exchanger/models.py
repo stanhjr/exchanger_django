@@ -277,6 +277,13 @@ class Transactions(models.Model):
         return self.amount_exchange
 
     @property
+    def amount_real_received(self):
+        commission_withdraw = self.currency_received.commission_withdraw
+        if commission_withdraw:
+            return self.amount_received + commission_withdraw
+        return self.amount_received
+
+    @property
     def crypto_to_fiat(self) -> bool:
         if self.currency_received.fiat:
             return True

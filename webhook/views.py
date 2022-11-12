@@ -25,19 +25,19 @@ class WhiteBitWebHook(APIView):
         if serializer.is_valid():
             method = serializer.validated_data.get("method")
             params = serializer.validated_data.get("params")
-            print(method)
-            print(params)
             unique_id = params.get("uniqueId")
             wallet_address = params.get("address")
             if method == 'deposit.processed' and unique_id:
+                print(method)
+                print(params)
                 transaction = Transactions.objects.filter(fiat_unique_id=unique_id).first()
                 if not transaction:
                     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
-
                 transaction.address_from = params.get('address')
                 transaction.hash = params.get('transactionHash')
                 # status to payment_received
                 transaction.status_update()
+
                 try:
                     self.white_bit_api.start_trading(
                         transaction_pk=str(transaction.pk),
@@ -74,6 +74,8 @@ class WhiteBitWebHook(APIView):
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             if method == 'deposit.processed' and wallet_address:
+                print(method)
+                print(params)
                 transaction = Transactions.objects.filter(deposit_address=wallet_address).first()
                 if not transaction:
                     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
@@ -118,12 +120,16 @@ class WhiteBitWebHook(APIView):
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             if method == 'withdraw.pending':
+                print(method)
+                print(params)
                 transaction = Transactions.objects.filter(unique_id=unique_id).first()
                 # status to create_for_payment
                 transaction.status_update()
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             if method == 'withdraw.successful':
+                print(method)
+                print(params)
                 transaction = Transactions.objects.filter(unique_id=unique_id).first()
                 transaction.status = 'completed'
                 transaction.is_confirm = True
