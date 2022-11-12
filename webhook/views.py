@@ -28,6 +28,7 @@ class WhiteBitWebHook(APIView):
             unique_id = params.get("uniqueId")
             wallet_address = params.get("address")
             if method == 'deposit.processed' and unique_id:
+                # FIAT to CRYPTO EXCHANGE
                 print(method)
                 print(params)
                 transaction = Transactions.objects.filter(fiat_unique_id=unique_id).first()
@@ -45,7 +46,7 @@ class WhiteBitWebHook(APIView):
                         name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
                         market=transaction.market,
                         amount_exchange=str(transaction.amount_real_exchange),
-                        amount_received=str(transaction.amount_received),
+                        amount_received=str(transaction.amount_real_received),
                         to_crypto=True
                     )
                 except ExchangeTradeError as e:
@@ -62,7 +63,7 @@ class WhiteBitWebHook(APIView):
                     provider=transaction.currency_received.provider,
                     currency=str(transaction.currency_received.name_from_white_bit),
                     address=str(transaction.address),
-                    amount_price=str(Decimal(transaction.amount_received) + Decimal(transaction.currency_received.commission_withdraw))
+                    amount_price=str(transaction.amount_real_received)
                 )
                 if not withdraw_crypto:
                     transaction.failed = True
@@ -74,6 +75,7 @@ class WhiteBitWebHook(APIView):
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             if method == 'deposit.processed' and wallet_address:
+                # CRYPTO to FIAT EXCHANGE
                 print(method)
                 print(params)
                 transaction = Transactions.objects.filter(deposit_address=wallet_address).first()
@@ -91,7 +93,7 @@ class WhiteBitWebHook(APIView):
                         name_from_white_bit_received=transaction.currency_received.name_from_white_bit,
                         market=transaction.market,
                         amount_exchange=str(transaction.amount_real_exchange),
-                        amount_received=str(transaction.amount_received)
+                        amount_received=str(transaction.amount_real_received)
                     )
                 except ExchangeTradeError as e:
                     print(e)
@@ -108,7 +110,7 @@ class WhiteBitWebHook(APIView):
                     provider=transaction.currency_received.provider,
                     currency=transaction.currency_received.name_from_white_bit,
                     address=transaction.address,
-                    amount_price=str(Decimal(transaction.amount_received) + Decimal(transaction.currency_received.commission_withdraw)),
+                    amount_price=str(transaction.amount_real_received),
                 )
                 if not withdraw_crypto:
                     transaction.failed = True

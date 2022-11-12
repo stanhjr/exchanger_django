@@ -87,11 +87,11 @@ class WhiteBitApi(WhiteBitAbstract):
         print(response.json())
         return response.status_code
 
-    def _transfer_to_trade_balance(self, currency: str, amount_price: str):
+    def _transfer_to_trade_balance(self, currency: str, amount_exchange: str):
         request_url = '/api/v4/main-account/transfer'
         data = {
             "ticker": currency,
-            "amount": amount_price,
+            "amount": amount_exchange,
             "from": "main",
             "to": "spot",
             "request": request_url,
@@ -99,11 +99,11 @@ class WhiteBitApi(WhiteBitAbstract):
         }
         return self._get_response_status_code(data=data, complete_url=self.base_url + request_url)
 
-    def _transfer_to_main_balance(self, currency: str, amount_price: str) -> int:
+    def _transfer_to_main_balance(self, currency: str, amount_received: str) -> int:
         request_url = '/api/v4/main-account/transfer'
         data = {
             "ticker": currency,
-            "amount": amount_price,
+            "amount": amount_received,
             "from": "spot",
             "to": "main",
             "request": request_url,
@@ -281,26 +281,27 @@ class WhiteBitApi(WhiteBitAbstract):
         Takes params and exchange from WhiteBit, returned True If the exchange was successful
         raise ExchangeTradeError If the exchange was not successful
 
-        :param to_crypto:
-        :param transaction_pk:
+        :param to_crypto: bool
+        :param transaction_pk: str(int)
         :param name_from_white_bit_exchange:
         :param name_from_white_bit_received:
-        :param market:
+        :param market:  (USDT_UAH, BTC_UAH etc)
         :param amount_received:
         :param amount_exchange:
         :return: True
         """
-
+        print('amount_received', amount_received, 'amount_exchange', amount_exchange)
         client_order_id = f'order-client-{transaction_pk}'
         amount_exchange = str(Decimal(amount_exchange).quantize(Decimal("1.00000000")))
 
         # start exchange
-        # status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
-        #                                               amount_price=amount_exchange)
-        # if status_code > 210:
-        #     raise ExchangeTradeError('ERROR transfer_to_trade_balance failed')
+        status_code = self._transfer_to_trade_balance(currency=name_from_white_bit_exchange,
+                                                      amount_exchange=amount_exchange)
+        if status_code > 210:
+            print('transfer_to_trade_balance', status_code)
+            raise ExchangeTradeError('ERROR transfer_to_trade_balance failed')
 
-        # time.sleep(1)
+        time.sleep(1)
 
         if to_crypto:
             status_code = self.exchange_fiat_to_crypto(
@@ -316,14 +317,16 @@ class WhiteBitApi(WhiteBitAbstract):
             )
 
         if status_code > 210:
+            print('exchange_fiat_to_crypto', status_code)
             raise ExchangeTradeError('ERROR exchange API')
 
         time.sleep(1)
         status_code = self._transfer_to_main_balance(currency=name_from_white_bit_received,
-                                                     amount_price=amount_received)
+                                                     amount_received=amount_received)
 
         time.sleep(1)
         if status_code > 210:
+            print('transfer_to_main_balance', status_code)
             raise ExchangeTradeError('ERROR transfer_to_main_balance failed')
 
         return True
