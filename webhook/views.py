@@ -5,7 +5,6 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from exchanger.exchange_exceptions import ExchangeTradeError
 from exchanger.models import Transactions, ExchangeRates
 from exchanger.whitebit_api import WhiteBitApi
 from webhook.serializers import WhiteBitSerializer
@@ -40,9 +39,10 @@ class WhiteBitWebHook(APIView):
                 try:
                     if Decimal(str(transaction.amount_exchange)) != Decimal(params.get('amount')):
                         transaction.amount_exchange = Decimal(params.get('amount'))
-                        exchange_pair = ExchangeRates.objects.filter(currency_left=transaction.currency_exchange,
-                                                                     currency_right=transaction.currency_received).first()
-                        transaction.amount_received = exchange_pair.get_calculate(transaction.amount_exchange)
+                    exchange_pair = ExchangeRates.objects.filter(currency_left=transaction.currency_exchange,
+                                                                 currency_right=transaction.currency_received).first()
+                    transaction.amount_received = exchange_pair.get_calculate(transaction.amount_exchange)
+                    print("EXCHANGE PAIR", exchange_pair)
                 except Exception as e:
                     print(e)
 
@@ -66,11 +66,13 @@ class WhiteBitWebHook(APIView):
                 try:
                     if Decimal(str(transaction.amount_exchange)) != Decimal(params.get('amount')):
                         transaction.amount_exchange = Decimal(params.get('amount'))
-                        exchange_pair = ExchangeRates.objects.filter(currency_left=transaction.currency_exchange,
-                                                                     currency_right=transaction.currency_received).first()
-                        transaction.amount_received = exchange_pair.get_calculate(transaction.amount_exchange)
+                    exchange_pair = ExchangeRates.objects.filter(currency_left=transaction.currency_exchange,
+                                                                 currency_right=transaction.currency_received).first()
+                    transaction.amount_received = exchange_pair.get_calculate(transaction.amount_exchange)
+                    print("EXCHANGE PAIR", exchange_pair)
                 except Exception as e:
                     print(e)
+
                 transaction.get_deposit = True
                 transaction.address_from = params.get('address')
                 transaction.hash = params.get('transactionHash')
