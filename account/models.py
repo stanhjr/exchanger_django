@@ -162,6 +162,10 @@ class Payouts(models.Model):
     user = models.ForeignKey(CustomUser, related_name='payouts', on_delete=models.DO_NOTHING)
     price_usdt = models.DecimalField(default=0.00, validators=[MinValueValidator(0), ], max_digits=8, decimal_places=5)
     is_confirm = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ('-created_at', 'price_usdt')
 
     def __str__(self):
         return f'{self.user} -> {self.price_usdt}'
