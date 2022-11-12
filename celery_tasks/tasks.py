@@ -198,7 +198,7 @@ def create_withdraw(self, transaction_pk):
 
     transaction = Transactions.objects.filter(pk=transaction_pk, get_deposit=True, is_confirm=False).first()
     white_bit_api = WhiteBitApi()
-    withdraw= white_bit_api.create_withdraw(
+    withdraw = white_bit_api.create_withdraw(
         unique_id=str(transaction.unique_id),
         network=transaction.currency_received.network,
         provider=transaction.currency_received.provider,
@@ -231,7 +231,7 @@ def transfer_to_main_balance(self, transaction_pk: str):
 
     white_bit_api = WhiteBitApi()
 
-    status_code = white_bit_api.transfer_to_main_balance(currency=transaction.name_from_white_bit_received,
+    status_code = white_bit_api.transfer_to_main_balance(currency=transaction.currency_received.name_from_white_bit,
                                                          amount_received=transaction.amount_real_received)
     if status_code > 210:
         print('transfer_to_main_balance', status_code)
@@ -299,7 +299,7 @@ def start_trading(self, transaction_pk: str, to_crypto=None):
     amount_exchange = str(Decimal(transaction.amount_real_exchange).quantize(Decimal("1.00000000")))
     white_bit_api = WhiteBitApi()
 
-    status_code = white_bit_api.transfer_to_trade_balance(currency=transaction.name_from_white_bit_exchange,
+    status_code = white_bit_api.transfer_to_trade_balance(currency=transaction.currency_exchange.name_from_white_bit,
                                                           amount_exchange=amount_exchange)
     if status_code > 210:
         print('transfer_to_trade_balance ERROR', status_code)
