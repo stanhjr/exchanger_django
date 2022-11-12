@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from exchanger.exchange_exceptions import ExchangeTradeError
-from exchanger.models import Transactions
+from exchanger.models import Transactions, ExchangeRates
 from exchanger.whitebit_api import WhiteBitApi
 from webhook.serializers import WhiteBitSerializer
 from celery_tasks.tasks import send_transaction_satus, start_trading
@@ -37,10 +37,15 @@ class WhiteBitWebHook(APIView):
                 transaction.address_from = params.get('address')
                 transaction.hash = params.get('transactionHash')
                 transaction.get_deposit = True
-                amount = params.get('amount')
+                try:
+                    if Decimal(str(transaction.amount_exchange)) != Decimal(params.get('amount')):
+                        transaction.amount_exchange = Decimal(params.get('amount'))
+                        exchange_pair = ExchangeRates.objects.filter(currency_left=transaction.currency_exchange,
+                                                                     currency_right=transaction.currency_received).first()
+                        transaction.amount_received = exchange_pair.get_calculate(transaction.amount_exchange)
+                except Exception as e:
+                    print(e)
 
-                print('amount', amount)
-                # TODO RE CALCULATE !!!!! AMOUNT
                 # status to payment_received
                 transaction.status_update()
                 start_trading.apply_async(kwargs=dict(transaction_pk=str(transaction.pk), to_crypto=True))
@@ -51,14 +56,21 @@ class WhiteBitWebHook(APIView):
                 # CRYPTO to FIAT EXCHANGE
                 print(method)
                 print(params)
-                amount = params.get('amount')
-                print('amount', amount)
+                print('amount', params.get('amount'))
 
                 transaction = Transactions.objects.filter(deposit_address=wallet_address).first()
                 if not transaction:
                     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
                 # status to payment_received
+                try:
+                    if Decimal(str(transaction.amount_exchange)) != Decimal(params.get('amount')):
+                        transaction.amount_exchange = Decimal(params.get('amount'))
+                        exchange_pair = ExchangeRates.objects.filter(currency_left=transaction.currency_exchange,
+                                                                     currency_right=transaction.currency_received).first()
+                        transaction.amount_received = exchange_pair.get_calculate(transaction.amount_exchange)
+                except Exception as e:
+                    print(e)
                 transaction.get_deposit = True
                 transaction.address_from = params.get('address')
                 transaction.hash = params.get('transactionHash')
