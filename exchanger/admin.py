@@ -8,16 +8,24 @@ from exchanger.models import ProfitModel
 from exchanger.models import Commissions
 
 
-admin.site.register(Currency)
-admin.site.register(ExchangeRates)
-admin.site.register(ProfitTotal)
-admin.site.register(ProfitModel)
-admin.site.register(Commissions)
+@admin.register(ProfitTotal)
+class ProfitTotalAdmin(admin.ModelAdmin):
+    list_display = ("total_usdt", "profit_percent")
+
+
+@admin.register(ProfitModel)
+class ProfitModelAdmin(admin.ModelAdmin):
+    list_display = ("level", "price_dollars", "profit_percent")
+
+
+@admin.register(Commissions)
+class CommissionsAdmin(admin.ModelAdmin):
+    list_display = ("white_bit_commission", "service_commission_to_fiat", "service_commission_to_crypto")
 
 
 @admin.register(Transactions)
 class TransactionsAdmin(admin.ModelAdmin):
-    readonly_fields = ("unique_id", "address", "hash" ,
+    readonly_fields = ("unique_id", "address", "hash",
                        "email", "hash", "address_from", "address_to", "fiat_unique_id",
                        "deposit_address", "created_at", "status_time_update")
     list_display = ("user", "email", "currency_exchange", "currency_received",
@@ -25,3 +33,13 @@ class TransactionsAdmin(admin.ModelAdmin):
     list_filter = ("status", "failed")
     search_fields = ("user__email__icontains", "unique_id", "email")
     list_per_page = 50
+
+
+@admin.register(Currency)
+class CurrencyAdmin(admin.ModelAdmin):
+    list_display = ("name", "network", "name_from_white_bit", "commission_deposit", "commission_withdraw", "fiat")
+
+
+@admin.register(ExchangeRates)
+class ExchangeRatesAdmin(admin.ModelAdmin):
+    list_display = ("currency_left", "currency_right", "value_left", "value_right")

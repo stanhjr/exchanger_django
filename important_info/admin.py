@@ -37,6 +37,7 @@ class FaqAdmin(TranslatableAdmin):
 
 class GetInTouchAdmin(admin.ModelAdmin):
     list_display = ('email', 'viewed', 'created_at')
+    list_filter = ('created_at', 'viewed')
 
 
 admin.site.register(Action, ActionAdmin)
