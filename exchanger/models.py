@@ -255,6 +255,7 @@ class Transactions(models.Model):
     status_time_update = models.DateTimeField(auto_now=True)
     is_confirm = models.BooleanField(default=False)
     failed = models.BooleanField(default=False)
+    fail_pending = models.BooleanField(default=False)
     failed_error = models.CharField(blank=True, null=True, max_length=200)
     try_fixed_count_error = models.IntegerField(default=0)
     reference_dollars = models.DecimalField(null=True, blank=True, max_digits=60, decimal_places=30)
@@ -266,7 +267,7 @@ class Transactions(models.Model):
     class Meta:
         verbose_name = 'Transactions'
         verbose_name_plural = 'Transaction'
-        ordering = ['-created_at', 'is_confirm']
+        ordering = ['-fail_pending', '-created_at', 'is_confirm', ]
 
     @property
     def complete(self):

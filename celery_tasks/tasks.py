@@ -37,10 +37,9 @@ class BaseTaskWithRetry(Task):
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     # Execute daily at midnight
-    sender.add_periodic_task(
-        crontab(hour=0, minute=0),
-        cleaner_unused_transactions.s('Happy Mondays!'),
-    )
+    sender.add_periodic_task(crontab(hour=0, minute=0), cleaner_unused_transactions.s())
+    # Execute every 30 minutes
+    sender.add_periodic_task(1800, check_failed_pending_transactions.s())
 
 
 def generate_key() -> str:
@@ -338,3 +337,13 @@ def cleaner_unused_transactions():
     transactions = Transactions.objects.filter(get_deposit=False, created_at__lte=datetime.now() - timedelta(days=1))
     transactions.delete()
     return 'cleaner unused transactions complete'
+
+
+@app.task
+def check_failed_pending_transactions():
+    from exchanger.models import Transactions
+    from datetime import datetime, timedelta
+    transactions = Transactions.objects.filter(get_deposit=True,
+                                               status_time_update__lte=datetime.now() - timedelta(hours=1),
+                                               status='withdraw_pending')
+    transactions.update(fail_pending=True)

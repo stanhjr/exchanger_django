@@ -31,6 +31,9 @@ config = {
         'celery_tasks.tasks.cleaner_unused_transactions': {
             'queue': 'exchange'
         },
+        'celery_tasks.tasks.check_failed_pending_transactions': {
+            'queue': 'exchange'
+        },
 
     },
     'accept_content': ['json', 'application/x-python-serialize'],
