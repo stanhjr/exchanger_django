@@ -26,7 +26,7 @@ class CustomUser(AbstractUser):
     inviter_token = models.CharField(max_length=150, null=True, blank=True)
     last_action = models.DateTimeField(default=timezone.now)
     is_confirmed = models.BooleanField(default=False)
-
+    created_at = models.DateTimeField(default=timezone.now)
     paid_from_referral = models.DecimalField(default=0.00, validators=[MinValueValidator(0), ],
                                              max_digits=60, decimal_places=2)
     verify_code = models.CharField(default='', max_length=100, null=True, blank=True)
