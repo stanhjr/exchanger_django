@@ -87,6 +87,8 @@ class WhiteBitWebHook(APIView):
                 print(method)
                 print(params)
                 transaction = Transactions.objects.filter(unique_id=unique_id).first()
+                if params.get('transactionHash'):
+                    transaction.hash = params.get('transactionHash')
                 # status to create_for_payment
                 transaction.status_update()
                 return Response(serializer.data, status=status.HTTP_200_OK)
