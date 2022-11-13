@@ -32,6 +32,12 @@ class Currency(models.Model):
     commission_withdraw = models.DecimalField(validators=[MinValueValidator(0), ],
                                               max_digits=25, decimal_places=15, null=True)
 
+    @property
+    def name_for_best_change(self):
+        if self.fiat:
+            return 'CARDUAH'
+        return self.name_from_white_bit
+
     @classmethod
     def update_min_max_value(cls, assets_dict: dict):
 

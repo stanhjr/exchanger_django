@@ -19,6 +19,7 @@ from django.urls import include
 from django.conf.urls.static import static
 from django.conf import settings
 
+from bestchange.views import best_change_xml
 from webhook.views import WhiteBitVerify, WhiteBitWebHook
 from .yasg import url_patterns as doc_urls
 
@@ -30,6 +31,7 @@ urlpatterns = [
     path('exchanger/', include('exchanger.urls')),
     path('webhook/', WhiteBitWebHook.as_view(), name='web_hook'),
     path('whiteBIT-verification/', WhiteBitVerify.as_view(), name='whiteBIT-verification'),
+    path('bestchange.xml/', best_change_xml)
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += doc_urls
