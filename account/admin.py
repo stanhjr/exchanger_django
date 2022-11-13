@@ -1,8 +1,10 @@
 from django.contrib import admin
 
-from account.models import CustomUser
-from account.models import Payouts
-from account.models import ReferralRelationship
+from account.models import (
+    CustomUser,
+    Payouts,
+    ReferralRelationship,
+)
 
 
 @admin.register(ReferralRelationship)
