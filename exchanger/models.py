@@ -144,6 +144,14 @@ class ExchangeRates(models.Model):
         return Decimal(self.currency_left.min_deposit)
 
     @property
+    def min_value_by_frontend(self):
+        return self.min_value * Decimal(1.05)
+
+    @property
+    def max_value_by_frontend(self):
+        return self.max_value * Decimal(0.95)
+
+    @property
     def max_value(self):
         max_right = self.currency_right.max_withdraw / self.value_right
         if max_right < self.currency_left.max_deposit:

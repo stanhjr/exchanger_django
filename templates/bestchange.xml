@@ -7,8 +7,8 @@
         <in>{{ rate.value_left }}</in>
         <out>{{ rate.value_right }}</out>
         <amount>572962.42</amount>
-        <minamount>{{ rate.min_value }}</minamount>
-        <maxamount>{{ rate.max_value }}</maxamount>
+        <minamount>{{ rate.min_value_by_frontend }}</minamount>
+        <maxamount>{{ rate.max_value_by_frontend }}</maxamount>
     </item>
     {% endfor %}
 </rates>
