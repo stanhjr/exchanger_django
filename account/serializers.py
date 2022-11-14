@@ -12,6 +12,7 @@ from account.exception_custom import TwoFactorAuthException
 from account.models import CustomUser, Payouts
 from celery_tasks.tasks import generate_key, send_verify_code_to_email
 from exchanger.models import Transactions
+from exchanger.serializers import CurrencySerializer
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -139,7 +140,6 @@ class UserBonusCalculateSerializer(serializers.Serializer):
 
 
 class UserAnalyticsSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = CustomUser
         fields = ['counts_of_referral', 'available_for_payment',
@@ -185,7 +185,6 @@ class ChangeEmailSerializer(serializers.Serializer):
 
 
 class SignUpConfirmSerializer(serializers.Serializer):
-
     default_error_messages = {
         'not_valid_code': _('not_valid_code'),
 
@@ -217,6 +216,9 @@ class SignUpConfirmSerializer(serializers.Serializer):
 
 
 class UserTransactionSerializer(serializers.ModelSerializer):
+    currency_received = CurrencySerializer()
+    currency_exchange = CurrencySerializer()
+
     class Meta:
         model = Transactions
         fields = ['transaction_date', 'status', 'currency_exchange', 'currency_received',
@@ -225,7 +227,6 @@ class UserTransactionSerializer(serializers.ModelSerializer):
 
 
 class CreatePayoutSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Payouts
         fields = ['price_usdt', ]
