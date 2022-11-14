@@ -69,8 +69,8 @@ class TransactionsSerializerResponse(serializers.ModelSerializer):
 
 
 class TransactionsSerializerFiatResponse(serializers.ModelSerializer):
-    currency_received =  CurrencySerializer()
-    currency_exchange = CurrencySerializer()
+    currency_received = serializers.StringRelatedField()
+    currency_exchange = serializers.StringRelatedField()
 
     class Meta:
         model = Transactions
