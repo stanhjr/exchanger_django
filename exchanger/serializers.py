@@ -58,8 +58,8 @@ class TransactionsFiatToCryptoSerializer(TransactionsSerializer):
 
 
 class TransactionsSerializerResponse(serializers.ModelSerializer):
-    currency_received = serializers.StringRelatedField()
-    currency_exchange = serializers.StringRelatedField()
+    currency_received = CurrencySerializer()
+    currency_exchange = CurrencySerializer()
 
     class Meta:
         model = Transactions
@@ -69,8 +69,8 @@ class TransactionsSerializerResponse(serializers.ModelSerializer):
 
 
 class TransactionsSerializerFiatResponse(serializers.ModelSerializer):
-    currency_received = serializers.StringRelatedField()
-    currency_exchange = serializers.StringRelatedField()
+    currency_received = CurrencySerializer()
+    currency_exchange = CurrencySerializer()
 
     class Meta:
         model = Transactions
