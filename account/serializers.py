@@ -35,8 +35,8 @@ class GetUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'username', 'referral_url', 'paid_from_referral',
-                  'level', 'sum_refers_eq_usdt', 'is_confirmed', 'two_factor_auth', 'available_for_payment'
-                  ]
+                  'level', 'sum_refers_eq_usdt', 'is_confirmed', 'two_factor_auth', 'available_for_payment',
+                  'counts_exchange_all_time', 'counts_exchange_per_mount', 'sum_exchange_usdt_all_time']
 
 
 class CustomTokenRefreshSerializer(TokenRefreshSerializer):

@@ -305,13 +305,9 @@ if __name__ == '__main__':
     wb = WhiteBitApi()
     wb.get_trade_balance()
     wb.get_main_balance()
-# UAH {'available': '57.48913926', 'freeze': '0'}
-# USDT {'available': '0.1385', 'freeze': '0'}
-# UAH {'main_balance': '27.0993'}
-# USDT {'main_balance': '0.9998'}
 
 
 # UAH {'available': '54.27085926', 'freeze': '0'}
 # USDT {'available': '0.1385', 'freeze': '0'}
-# UAH {'main_balance': '27.0993'}
+# UAH {'main_balance': '27.1093'}
 # USDT {'main_balance': '0.9998'}

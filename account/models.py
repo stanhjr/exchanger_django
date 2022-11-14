@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
-from django.db.models import Sum, Max
+from django.db.models import Sum, Q
 from django.utils import timezone
 from django.db import models
 from django.db.models.signals import post_save
@@ -63,11 +63,12 @@ class CustomUser(AbstractUser):
 
     @classmethod
     def _get_sum_dollars_refers_per_month(cls, user) -> int:
-        month_number = datetime.datetime.now().strftime("%m")
+        last_mount_end = datetime.datetime.today() - datetime.timedelta(days=30)
         invited_users = cls.objects.filter(inviter_token=user.pk).all(). \
             prefetch_related('transactions'). \
             filter(transactions__is_confirm=True,
-                   transactions__created_at__month=month_number). \
+                   transactions__created_at__lte=datetime.datetime.today(),
+                   transactions__created_at__gt=last_mount_end). \
             aggregate(Sum('transactions__reference_dollars'))
 
         return get_zero_or_none(invited_users.get('transactions__reference_dollars__sum'))
@@ -75,6 +76,26 @@ class CustomUser(AbstractUser):
     @property
     def counts_of_referral(self):
         return CustomUser.objects.filter(inviter_token=self.pk).count()
+
+    @property
+    def counts_exchange_all_time(self):
+        from exchanger.models import Transactions
+        return Transactions.objects.filter(user=self).count()
+
+    @property
+    def counts_exchange_per_mount(self):
+        from exchanger.models import Transactions
+
+        last_mount_end = datetime.datetime.today() - datetime.timedelta(days=30)
+        return Transactions.objects.filter(user=self,
+                                           created_at__lte=datetime.datetime.today(),
+                                           created_at__gt=last_mount_end).count()
+
+    @property
+    def sum_exchange_usdt_all_time(self):
+        from exchanger.models import Transactions
+        result = Transactions.objects.filter(user=self).aggregate(Sum('reference_dollars'))
+        return get_zero_or_none(result.get('reference_dollars__sum'))
 
     @property
     def total_sum_from_referral(self):
