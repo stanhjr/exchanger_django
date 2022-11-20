@@ -23,15 +23,16 @@ from bestchange.views import best_change_xml
 from webhook.views import WhiteBitVerify, WhiteBitWebHook
 from .yasg import url_patterns as doc_urls
 
+
 urlpatterns = [
     path('api/admin/', admin.site.urls),
-    path('account/', include('account.urls')),
-    path('blog/', include('blog.urls')),
-    path('important_info/', include('important_info.urls')),
-    path('exchanger/', include('exchanger.urls')),
-    path('webhook/', WhiteBitWebHook.as_view(), name='web_hook'),
-    path('whiteBIT-verification/', WhiteBitVerify.as_view(), name='whiteBIT-verification'),
-    path('bestchange.xml/', best_change_xml)
+    path('api/account/', include('account.urls')),
+    path('api/blog/', include('blog.urls')),
+    path('api/important_info/', include('important_info.urls')),
+    path('api/exchanger/', include('exchanger.urls')),
+    path('api/webhook/', WhiteBitWebHook.as_view(), name='web_hook'),
+    path('api/whiteBIT-verification/', WhiteBitVerify.as_view(), name='whiteBIT-verification'),
+    path('api/bestchange.xml/', best_change_xml)
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += doc_urls
