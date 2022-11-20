@@ -24,7 +24,7 @@ from webhook.views import WhiteBitVerify, WhiteBitWebHook
 from .yasg import url_patterns as doc_urls
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('api/admin/', admin.site.urls),
     path('account/', include('account.urls')),
     path('blog/', include('blog.urls')),
     path('important_info/', include('important_info.urls')),
