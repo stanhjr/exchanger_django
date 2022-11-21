@@ -57,7 +57,8 @@ def send_registration_link_to_email(code: str, email_to: str, subject: str):
     Hi,
     How are you?
     This is your registration link:
-    {settings.HOST}/account/account-activate/?code=4641cb74c97b79fa0f7ed9158a6f0e69b7f8d3b3"""
+    
+    {settings.HOST}/personal-area/account-activate/?code={code}"""
 
     message = MIMEMultipart("alternative")
     message["Subject"] = subject
