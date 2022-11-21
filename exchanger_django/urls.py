@@ -32,7 +32,7 @@ urlpatterns = [
     path('api/important_info/', include('important_info.urls')),
     path('api/exchanger/', include('exchanger.urls')),
     path('api/webhook/', WhiteBitWebHook.as_view(), name='web_hook'),
-    path('/whiteBIT-verification/', WhiteBitVerify.as_view(), name='whiteBIT-verification'),
+    path('whiteBIT-verification/', WhiteBitVerify.as_view(), name='whiteBIT-verification'),
     path('api/bestchange.xml/', best_change_xml)
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
