@@ -226,7 +226,7 @@ SWAGGER_SETTINGS = {
         'patch'
     ],
 }
-APPEND_SLASH = True
+APPEND_SLASH = False
 
 HOST = str(os.getenv('HOST'))
 EMAIL_HOST = str(os.getenv('EMAIL_HOST'))
