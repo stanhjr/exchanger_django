@@ -12,7 +12,7 @@ from account.views import (
     ResetPasswordWithCodeView,
     LoginRefreshView,
     UserTransactions,
-    PayoutCreateView
+    PayoutCreateView, SendVerifyCodeView
 )
 from account.views import UserRefAnalyticsView
 from account.views import UserViewSet
@@ -30,6 +30,7 @@ urlpatterns += [
     path('token/refresh/', LoginRefreshView.as_view(), name='token_refresh'),
     path('user_info/', UserViewSet.as_view({'get': 'list'}), name='user_info'),
     path('account-activate/', SignUpConfirm.as_view(), name='account-activate'),
+    path('send-verify-link/', SendVerifyCodeView.as_view(), name='send-verify-link'),
     path('get-bonus-calculate/', UserBonusPreCalculateView.as_view(), name='get-bonus_calculate'),
     path('referral-statistics/', UserRefAnalyticsView.as_view({'get': 'list'}), name='referral-statistics'),
     path('referral-operations-list/', UserReferralOperationsView.as_view({'get': 'list'}), name='referral-statistics'),

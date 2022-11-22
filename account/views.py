@@ -9,6 +9,7 @@ from rest_framework.generics import CreateAPIView, UpdateAPIView
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from account.models import CustomUser, Payouts
@@ -215,6 +216,20 @@ class SendChangePasswordCodeView(UpdateAPIView):
 
             return Response({'detail': 'email sending'}, status=status.HTTP_200_OK)
         return Response({'detail': 'not valid email'}, status=404)
+
+
+class SendVerifyCodeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = CustomUser.objects.all()
+
+    def post(self, request):
+        code = generate_key()
+        self.request.user.verify_code = code
+        self.request.user.save()
+        send_registration_link_to_email.delay(email_to=self.request.user.verify_code,
+                                              code=code,
+                                              subject="Email Verify Code")
+        return Response("message: code sending", status=status.HTTP_200_OK)
 
 
 class ChangePasswordView(UpdateAPIView):
