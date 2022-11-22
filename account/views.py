@@ -223,10 +223,12 @@ class SendVerifyCodeView(APIView):
     queryset = CustomUser.objects.all()
 
     def post(self, request):
+        if self.request.user.is_confirmed is True:
+            return Response("message: account is confirmed", status=status.HTTP_200_OK)
         code = generate_key()
         self.request.user.verify_code = code
         self.request.user.save()
-        send_registration_link_to_email.delay(email_to=self.request.user.verify_code,
+        send_registration_link_to_email.delay(email_to=self.request.user.email,
                                               code=code,
                                               subject="Email Verify Code")
         return Response("message: code sending", status=status.HTTP_200_OK)
