@@ -311,3 +311,9 @@ if __name__ == '__main__':
 # USDT {'available': '0.1385', 'freeze': '0'}
 # UAH {'main_balance': '27.1093'}
 # USDT {'main_balance': '0.9998'}
+
+
+# UAH {'available': '54.27085926', 'freeze': '0'}
+# USDT {'available': '0.1385', 'freeze': '0'}
+# UAH {'main_balance': '27.1093'}
+# USDT {'main_balance': '10.9998'}
