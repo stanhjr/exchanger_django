@@ -14,6 +14,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -34,7 +35,10 @@ ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-
+CORS_ALLOWED_ORIGIN = ['*']
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "Authorization",
+]
 AUTH_USER_MODEL = 'account.CustomUser'
 # Application definition
 
