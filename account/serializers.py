@@ -8,7 +8,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from account.exception_custom import TwoFactorAuthException
+from account.exception_custom import TwoFactorAuthException, AuthenticationFailed400
 from account.models import CustomUser, Payouts
 from celery_tasks.tasks import generate_key, send_verify_code_to_email
 from exchanger.models import Transactions
@@ -198,7 +198,7 @@ class SignUpConfirmSerializer(serializers.Serializer):
         code = attrs.get('code')
         user = CustomUser.objects.filter(verify_code=code).first()
         if not user:
-            raise AuthenticationFailed(
+            raise AuthenticationFailed400(
                 self.default_error_messages['not_valid_code'],
                 'no_active_account',
             )
