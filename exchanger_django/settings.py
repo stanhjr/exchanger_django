@@ -37,7 +37,11 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGIN = ['*']
 CORS_ALLOW_HEADERS = list(default_headers) + [
-    "Authorization",
+    'Authorization',
+    'Access-Control-Allow-Origin',
+    'Referer',
+    'referer',
+
 ]
 AUTH_USER_MODEL = 'account.CustomUser'
 # Application definition
