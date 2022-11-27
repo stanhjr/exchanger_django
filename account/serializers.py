@@ -204,6 +204,7 @@ class SignUpConfirmSerializer(serializers.Serializer):
             )
 
         user.verify_code = ''
+        user.is_confirmed = True
         user.save()
 
         refresh = TokenObtainPairSerializer.get_token(user)
