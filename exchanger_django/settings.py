@@ -41,6 +41,9 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'Access-Control-Allow-Origin',
     'Referer',
     'referer',
+    'sec-ch-ua',
+    'sec-ch-ua-mobile',
+    'sec-ch-ua-platform',
 
 ]
 AUTH_USER_MODEL = 'account.CustomUser'
