@@ -24,11 +24,11 @@ class CustomUser(AbstractUser):
     two_factor_auth_code = models.CharField(default='', max_length=100, null=True, blank=True)
     email = models.EmailField(blank=True, unique=True)
     inviter_token = models.CharField(max_length=150, null=True, blank=True)
-    last_action = models.DateTimeField(default=timezone.now)
-    is_confirmed = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
+    last_action = models.DateTimeField(default=timezone.now, verbose_name='Последнее действие на сайте')
+    is_confirmed = models.BooleanField(default=False, verbose_name='Подтвержден')
+    created_at = models.DateTimeField(default=timezone.now, verbose_name='Дата регистрации')
     paid_from_referral = models.DecimalField(default=0.00, validators=[MinValueValidator(0), ],
-                                             max_digits=60, decimal_places=2)
+                                             max_digits=60, decimal_places=2, verbose_name='Уровень рефералов')
     verify_code = models.CharField(default='', max_length=100, null=True, blank=True)
     reset_password_code = models.CharField(default='', max_length=100, null=True, blank=True)
 
@@ -42,6 +42,9 @@ class CustomUser(AbstractUser):
         Level_5 = 5
 
     level = models.IntegerField(choices=RefLevel.choices, blank=True, null=True, default=1)
+
+    class Meta:
+        verbose_name_plural = 'Пользователи'
 
     @property
     def available_for_payment(self) -> Decimal:
@@ -77,10 +80,14 @@ class CustomUser(AbstractUser):
     def counts_of_referral(self):
         return CustomUser.objects.filter(inviter_token=self.pk).count()
 
+    counts_of_referral.fget.short_description = 'Количество рефералов'
+
     @property
     def counts_exchange_all_time(self):
         from exchanger.models import Transactions
         return Transactions.objects.filter(user=self).count()
+
+    counts_exchange_all_time.fget.short_description = 'Количество обменов за всё время'
 
     @property
     def counts_exchange_per_mount(self):
@@ -90,6 +97,8 @@ class CustomUser(AbstractUser):
         return Transactions.objects.filter(user=self,
                                            created_at__lte=datetime.datetime.today(),
                                            created_at__gt=last_mount_end).count()
+
+    counts_exchange_per_mount.fget.short_description = 'Количество обменов за месяц'
 
     @property
     def sum_exchange_usdt_all_time(self):
@@ -149,15 +158,18 @@ class ReferralRelationship(models.Model):
     inviter = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name='inviter',
-        verbose_name="inviter",
+        verbose_name="Рефер",
         on_delete=models.CASCADE,
     )
     invited = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name='invited',
-        verbose_name="invited",
+        verbose_name="Реферал",
         on_delete=models.CASCADE,
     )
+
+    class Meta:
+        verbose_name_plural = 'Отношение пользователей'
 
     def __str__(self) -> str:
         return f"{self.inviter}_{self.invited}"
@@ -186,6 +198,7 @@ class Payouts(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
+        verbose_name_plural = 'Запрос на вывод средств'
         ordering = ('-created_at', 'price_usdt')
 
     def __str__(self):

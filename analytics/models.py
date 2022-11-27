@@ -15,10 +15,11 @@ PREVIOUS_MOUNT_Q = Q(is_confirm=True, created_at__lte=LAST_MOUNT_FINISH, created
 
 
 class AnalyticsExchange(models.Model):
-    name = models.CharField(default='analytics', max_length=100)
+    name = models.CharField(default='analytics', max_length=100, verbose_name='Аналитика')
 
     class Meta:
-        verbose_name = "Analytics Exchange"
+        verbose_name = "Аналитика"
+        verbose_name_plural = "Аналитика"
 
     def __str__(self):
         return self.name
@@ -27,29 +28,41 @@ class AnalyticsExchange(models.Model):
     def count_per_month(self):
         return Transactions.objects.filter(LAST_MOUNT_Q).count()
 
+    count_per_month.fget.short_description = 'Обменов за месяц'
+
     @property
     def count_all_time(self):
         return Transactions.objects.filter(is_confirm=True).count()
+
+    count_all_time.fget.short_description = 'Обменов за всё время'
 
     @property
     def sum_usd_per_month(self):
         result = Transactions.objects.filter(LAST_MOUNT_Q).aggregate(Sum('reference_dollars'))
         return int(get_zero_or_none(result.get('reference_dollars__sum')))
 
+    sum_usd_per_month.fget.short_description = 'Сумма за всё месяц'
+
     @property
     def sum_usd_all_time(self):
         result = Transactions.objects.filter(is_confirm=True).aggregate(Sum('reference_dollars'))
         return int(get_zero_or_none(result.get('reference_dollars__sum')))
+
+    count_all_time.fget.short_description = 'Сумма за всё время'
 
     @property
     def sum_max_usd_all_time(self):
         result = Transactions.objects.filter(is_confirm=True).aggregate(Sum('reference_dollars'))
         return int(get_zero_or_none(result.get('reference_dollars__sum')))
 
+    sum_max_usd_all_time.fget.short_description = 'Максимальная сумма за всё время'
+
     @property
     def sum_max_usd_per_month(self):
         result = Transactions.objects.filter(LAST_MOUNT_Q).aggregate(Max('reference_dollars'))
         return int(get_zero_or_none(result.get('reference_dollars__max')))
+
+    sum_max_usd_per_month.fget.short_description = 'Максимальная сумма за месяц'
 
     @property
     def change_percent_count_per_month(self):
@@ -60,6 +73,8 @@ class AnalyticsExchange(models.Model):
         result = (last_mount_counts - previous_mount_counts) / previous_mount_counts * 100
 
         return f'{result} %'
+
+    change_percent_count_per_month.fget.short_description = 'Количество обменов изменилось за месяц'
 
     @property
     def change_sum_per_month(self):
@@ -75,13 +90,18 @@ class AnalyticsExchange(models.Model):
 
         return f'{result} %'
 
+    change_sum_per_month.fget.short_description = 'Сумма обменов изменилось за месяц'
+
     @property
     def average_per_mount(self):
         result = Transactions.objects.filter(LAST_MOUNT_Q).aggregate(Avg('reference_dollars'))
         return int(get_zero_or_none(result.get('reference_dollars__avg')))
+
+    average_per_mount.fget.short_description = 'Средняя сумма за месяц'
 
     @property
     def average_all_time(self):
         result = Transactions.objects.filter(is_confirm=True).aggregate(Avg('reference_dollars'))
         return int(get_zero_or_none(result.get('reference_dollars__avg')))
 
+    average_all_time.fget.short_description = 'Средняя сумма за всё время'

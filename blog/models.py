@@ -9,6 +9,9 @@ from parler.utils.context import switch_language
 class Tag(TranslatableModel):
     translations = TranslatedFields(name=models.CharField(max_length=255), )
 
+    class Meta:
+        verbose_name_plural = 'Категории (тэги)'
+
     def __str__(self):
         return self.name
 
@@ -18,14 +21,15 @@ class Post(TranslatableModel):
         title=models.CharField(_("Title"), max_length=200, unique=True),
         text=models.TextField(_("Content"), blank=True)
     )
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
     slug = models.SlugField(unique=True, max_length=100, blank=True)
-    tags = models.ManyToManyField(Tag, related_name='posts')
-    minutes_for_reading = models.IntegerField(default=1)
+    tags = models.ManyToManyField(Tag, related_name='posts', verbose_name='Категория (тэг)')
+    minutes_for_reading = models.IntegerField(default=1, verbose_name='Минут для чтения')
     image = models.ImageField(upload_to='posts_images/%Y/%m/%d/', null=True, max_length=255)
-    recommendation = models.ManyToManyField('self', related_name='post_recommendation', null=True, blank=True)
+    recommendation = models.ManyToManyField('self', related_name='post_recommendation', null=True, blank=True, verbose_name='Рекомендации')
 
     class Meta:
+        verbose_name_plural = 'Посты'
         ordering = ['created']
 
     @property

@@ -12,7 +12,7 @@ from exchanger.tools import value_to_dollars, get_zero_or_none
 
 
 class Currency(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, verbose_name='Название на сайте')
     network = models.CharField(max_length=10, null=True, blank=True)
     provider = models.CharField(max_length=50, null=True, blank=True)
     name_from_white_bit = models.CharField(max_length=50, null=True, blank=True)
@@ -90,8 +90,8 @@ class Currency(models.Model):
         return queryset
 
     class Meta:
-        verbose_name = 'Currency'
-        verbose_name_plural = 'Currency'
+        verbose_name = 'Валюты'
+        verbose_name_plural = 'Валюты'
 
     def __str__(self):
         return self.name_from_white_bit
@@ -121,14 +121,18 @@ class Currency(models.Model):
 
 
 class ExchangeRates(models.Model):
-    currency_left = models.ForeignKey(Currency, related_name='exchange_left', on_delete=models.CASCADE)
-    currency_right = models.ForeignKey(Currency, related_name='exchange_right', on_delete=models.CASCADE)
-    value_left = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30)
-    value_right = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30)
+    currency_left = models.ForeignKey(Currency, related_name='exchange_left', on_delete=models.CASCADE,
+                                      verbose_name='Валюта слева')
+    currency_right = models.ForeignKey(Currency, related_name='exchange_right', on_delete=models.CASCADE,
+                                       verbose_name='Валюта справа')
+    value_left = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30,
+                                     verbose_name='Валюта слева значение')
+    value_right = models.DecimalField(default=1, validators=[MinValueValidator(0), ], max_digits=60, decimal_places=30,
+                                      verbose_name='Валюта справа значение')
 
     class Meta:
-        verbose_name = 'Exchange Rates'
-        verbose_name_plural = 'Exchange Rates'
+        verbose_name = 'Курсы валют'
+        verbose_name_plural = 'Курсы валют'
 
     @property
     def fiat_to_crypto(self) -> bool:
@@ -236,7 +240,7 @@ class Transactions(models.Model):
     unique_id = models.UUIDField(default=uuid.uuid4, editable=True)
     fiat_unique_id = models.UUIDField(default=uuid.uuid4, editable=True)
     deposit_address = models.CharField(null=True, blank=True, max_length=1024)
-    get_deposit = models.BooleanField(default=False)
+    get_deposit = models.BooleanField(default=False, verbose_name='Зачислено на White Bit')
     STATUS_CHOICES = [
         ('created', 'created'),  # created (default)
         ('payment_received', 'payment_received'),  # webhook received
@@ -255,32 +259,35 @@ class Transactions(models.Model):
     status_exchange = models.CharField(choices=EXCHANGE_CHOICES, default='created', max_length=100)
     status = models.CharField(choices=STATUS_CHOICES, default='created', max_length=30)
     user = models.ForeignKey(CustomUser, related_name='transactions', on_delete=models.DO_NOTHING, blank=True,
-                             null=True)
-    currency_exchange = models.ForeignKey(Currency, related_name='transaction_exchange', on_delete=models.DO_NOTHING)
-    currency_received = models.ForeignKey(Currency, related_name='transaction_received', on_delete=models.DO_NOTHING)
+                             null=True, verbose_name='Пользователь')
+    currency_exchange = models.ForeignKey(Currency, related_name='transaction_exchange', on_delete=models.DO_NOTHING,
+                                          verbose_name='Валюту отдаю')
+    currency_received = models.ForeignKey(Currency, related_name='transaction_received', on_delete=models.DO_NOTHING,
+                                          verbose_name='Валюту получаю')
     amount_exchange = models.DecimalField(default=1,
                                           validators=[MinValueValidator(0), ],
-                                          max_digits=60, decimal_places=30)
+                                          max_digits=60, decimal_places=30, verbose_name='Сумму отдаю')
     amount_received = models.DecimalField(default=1,
                                           validators=[MinValueValidator(0), ],
-                                          max_digits=60, decimal_places=30)
+                                          max_digits=60, decimal_places=30, verbose_name='Сумму получаю')
     hash = models.CharField(max_length=1000, null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    status_time_update = models.DateTimeField(auto_now=True)
-    is_confirm = models.BooleanField(default=False)
-    failed = models.BooleanField(default=False)
-    fail_pending = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now, verbose_name='Создано')
+    status_time_update = models.DateTimeField(auto_now=True, verbose_name='Последнее обновление статуса')
+    is_confirm = models.BooleanField(default=False, verbose_name='Проведено')
+    failed = models.BooleanField(default=False, verbose_name='Ошибка обменника')
+    fail_pending = models.BooleanField(default=False, verbose_name='Ошибка обменника (отправка)')
     failed_error = models.CharField(blank=True, null=True, max_length=200)
-    try_fixed_count_error = models.IntegerField(default=0)
-    reference_dollars = models.DecimalField(null=True, blank=True, max_digits=60, decimal_places=30)
+    try_fixed_count_error = models.IntegerField(default=0, verbose_name='Количество попыток устранить ошибку')
+    reference_dollars = models.DecimalField(null=True, blank=True, max_digits=60, decimal_places=30,
+                                            verbose_name='"Эквивалент в USDT')
     address = models.CharField(max_length=1000)
     email = models.EmailField(null=True)
     address_from = models.CharField(null=True, blank=True, max_length=200)
     address_to = models.CharField(null=True, blank=True, max_length=200)
 
     class Meta:
-        verbose_name = 'Transactions'
-        verbose_name_plural = 'Transaction'
+        verbose_name = 'Транзакции'
+        verbose_name_plural = 'Транзакции'
         ordering = ['-fail_pending', '-created_at', 'is_confirm', ]
 
     @property
@@ -401,10 +408,12 @@ class Transactions(models.Model):
 
 
 class ProfitTotal(models.Model):
-    total_usdt = models.IntegerField()
-    profit_percent = models.DecimalField(max_digits=4, decimal_places=2)
+    total_usdt = models.IntegerField(verbose_name='Эквивалент в USDT')
+    profit_percent = models.DecimalField(max_digits=4, decimal_places=2, verbose_name='Процент прибыли')
 
     class Meta:
+        verbose_name = 'Прибыль сайта'
+        verbose_name_plural = 'Прибыль сайта'
         ordering = ('total_usdt',)
 
     def get_coef(self):
@@ -415,9 +424,13 @@ class ProfitTotal(models.Model):
 
 
 class ProfitModel(models.Model):
-    level = models.IntegerField(default=1)
-    price_dollars = models.IntegerField()
-    profit_percent = models.DecimalField(max_digits=4, decimal_places=2)
+    level = models.IntegerField(default=1, verbose_name='Уровень')
+    price_dollars = models.IntegerField(verbose_name='Эквивалент в USDT')
+    profit_percent = models.DecimalField(max_digits=4, decimal_places=2, verbose_name='Процент кэшбека')
+
+    class Meta:
+        verbose_name_plural = 'Кэшбек за рефералов'
+        ordering = ('price_dollars',)
 
     @property
     def profit_percent_coef(self):
@@ -446,14 +459,14 @@ class ProfitModel(models.Model):
     def __str__(self) -> str:
         return f"price {self.price_dollars}$ -> profit percent {self.profit_percent} %"
 
-    class Meta:
-        ordering = ('price_dollars',)
-
 
 class Commissions(models.Model):
-    white_bit_commission = models.DecimalField(max_digits=4, decimal_places=2, default=0.01)
-    service_commission_to_fiat = models.DecimalField(max_digits=4, decimal_places=2, default=0.5)
-    service_commission_to_crypto = models.DecimalField(max_digits=4, decimal_places=2, default=0.5)
+    white_bit_commission = models.DecimalField(max_digits=4, decimal_places=2, default=0.01, verbose_name='Процент комиссии White Bit')
+    service_commission_to_fiat = models.DecimalField(max_digits=4, decimal_places=2, default=0.5, verbose_name='Комиссия на вывод FIAT')
+    service_commission_to_crypto = models.DecimalField(max_digits=4, decimal_places=2, default=0.5, verbose_name='Комиссия на вывод CRYPTO')
+
+    class Meta:
+        verbose_name_plural = 'Комиссия'
 
     def __str__(self):
         return f'commissions'

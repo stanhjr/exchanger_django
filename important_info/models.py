@@ -10,8 +10,8 @@ class Faq(TranslatableModel):
     )
 
     class Meta:
-        verbose_name = 'Faq settings'
-        verbose_name_plural = 'Faq settings'
+        verbose_name = 'FAQ настройки'
+        verbose_name_plural = 'FAQ настройки'
 
 
 class FeedbackMonitoring(TranslatableModel):
@@ -19,8 +19,8 @@ class FeedbackMonitoring(TranslatableModel):
         name=models.CharField(max_length=200),
     )
 
-    logo_image = models.ImageField(null=True, upload_to="logo_images/")
-    link = models.CharField(max_length=200)
+    logo_image = models.ImageField(null=True, upload_to="logo_images/", verbose_name='Логотип')
+    link = models.CharField(max_length=200, verbose_name='Ссылка')
 
     @property
     def image_url(self):
@@ -31,8 +31,8 @@ class FeedbackMonitoring(TranslatableModel):
         return self.name
 
     class Meta:
-        verbose_name = 'FeedbackMonitoring'
-        verbose_name_plural = 'FeedbackMonitoring'
+        verbose_name = 'Отзывы Monitoring'
+        verbose_name_plural = 'Отзывы FeedbackMonitoring'
 
 
 class FeedbackSites(TranslatableModel):
@@ -40,8 +40,8 @@ class FeedbackSites(TranslatableModel):
         name=models.CharField(max_length=200),
     )
 
-    logo_image = models.ImageField(null=True, upload_to="logo_images/")
-    link = models.CharField(max_length=200)
+    logo_image = models.ImageField(null=True, upload_to="logo_images/", verbose_name='Логотип')
+    link = models.CharField(max_length=200, verbose_name='Ссылка')
 
     @property
     def image_url(self):
@@ -52,8 +52,8 @@ class FeedbackSites(TranslatableModel):
         return self.name
 
     class Meta:
-        verbose_name = 'FeedbackSites'
-        verbose_name_plural = 'FeedbackSites'
+        verbose_name = 'Отзывы сайтов'
+        verbose_name_plural = 'Отзывы сайтов'
 
 
 class Action(TranslatableModel):
@@ -61,7 +61,7 @@ class Action(TranslatableModel):
         title=models.CharField(max_length=200),
         text=models.TextField()
     )
-    created_at = models.DateField(auto_now_add=True)
+    created_at = models.DateField(auto_now_add=True, verbose_name='Создано')
     new = models.BooleanField(default=True)
 
     image = models.ImageField(null=True, upload_to="actions_images/")
@@ -75,8 +75,8 @@ class Action(TranslatableModel):
         return self.title
 
     class Meta:
-        verbose_name = 'Action'
-        verbose_name_plural = 'Action'
+        verbose_name = 'Акции'
+        verbose_name_plural = 'Акции'
 
 
 class GetInTouchModel(models.Model):
@@ -84,13 +84,13 @@ class GetInTouchModel(models.Model):
     title = models.CharField(max_length=100)
     text = models.TextField(max_length=1024)
     telegram = models.CharField(max_length=100)
-    created_at = models.DateField(auto_now_add=True)
-    viewed = models.BooleanField(default=False)
+    created_at = models.DateField(auto_now_add=True, verbose_name='Создано')
+    viewed = models.BooleanField(default=False, verbose_name='Просмотрено')
 
     def __str__(self):
         return self.email
 
     class Meta:
-        verbose_name = 'GetInTouch'
-        verbose_name_plural = 'GetInTouch'
+        verbose_name = 'Связаться с нами (уведомления от юзеров)'
+        verbose_name_plural = 'Связаться с нами (уведомления от юзеров)'
         ordering = ['-created_at', 'viewed']
