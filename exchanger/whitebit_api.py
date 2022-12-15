@@ -153,7 +153,7 @@ class WhiteBitApi(WhiteBitAbstract):
 
     def create_withdraw(self, amount_price: str, currency: str, address: str,
                         unique_id: str, provider: str, network: str):
-
+        logging.info('-------try create_withdraw ---------1')
         request_url = '/api/v4/main-account/withdraw'
         data = {
             "ticker": currency,
@@ -163,6 +163,7 @@ class WhiteBitApi(WhiteBitAbstract):
             "request": request_url,
             "nonce": self._nonce
         }
+        logging.info(data)
         if network:
             data.update(network=network)
         if provider:
