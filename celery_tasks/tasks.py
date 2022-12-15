@@ -40,6 +40,7 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(crontab(hour=0, minute=0), cleaner_unused_transactions.s())
     # Execute every 30 minutes
     sender.add_periodic_task(1800, check_failed_pending_transactions.s())
+    sender.add_periodic_task(600, check_failed_create_withdraw_transactions.s())
 
 
 def generate_key() -> str:
@@ -216,12 +217,16 @@ def create_withdraw(self, transaction_pk):
         address=transaction.address,
         amount_price=str(transaction.amount_real_received),
     )
+
     if not withdraw:
         transaction.failed = True
         transaction.failed_error = 'not create_withdraw'
+        transaction.try_fixed_count_error += 1
         transaction.save()
         raise ExchangeTradeError
     transaction.status_exchange = 'create_withdraw'
+    transaction.try_fixed_count_error = 0
+    transaction.failed_error = ''
     transaction.status_update()
     return f'create withdraw {transaction.unique_id}'
 
@@ -247,10 +252,13 @@ def transfer_to_main_balance(self, transaction_pk: str):
     if status_code > 210:
         print('transfer_to_main_balance', status_code)
         transaction.failed = True
+        transaction.try_fixed_count_error += 1
         transaction.failed_error = 'ERROR transfer_to_main_balance failed'
         transaction.save()
         raise ExchangeTradeError('ERROR transfer_to_main_balance failed')
     transaction.status_exchange = 'transfer_to_main'
+    transaction.try_fixed_count_error = 0
+    transaction.failed_error = ''
     transaction.save()
     create_withdraw.apply_async(eta=now() + timedelta(seconds=5), kwargs=dict(transaction_pk=str(transaction.pk)))
     return f'transfer_to_main_balance {transaction.amount_real_received} complete'
@@ -287,13 +295,16 @@ def start_exchange(self, transaction_pk: str, to_crypto=None):
     if status_code > 210:
         print('exchange_fiat_to_crypto ERROR', status_code)
         transaction.failed = True
+        transaction.try_fixed_count_error += 1
+        transaction.failed_error = ''
         transaction.failed_error = 'ERROR exchange API'
         transaction.save()
         raise ExchangeTradeError('ERROR exchange API')
 
     transaction.status_exchange = 'exchange'
+    transaction.try_fixed_count_error = 0
     transaction.status_update()
-    transfer_to_main_balance.apply_async(eta=now() + timedelta(seconds=5),
+    transfer_to_main_balance.apply_async(eta=now() + timedelta(seconds=15),
                                          kwargs=dict(transaction_pk=str(transaction.pk)))
     return f'exchange complete {transaction.unique_id} market {transaction.market} '
 
@@ -320,13 +331,16 @@ def start_trading(self, transaction_pk: str, to_crypto=None):
     if status_code > 210:
         print('transfer_to_trade_balance ERROR', status_code)
         transaction.failed = True
+        transaction.try_fixed_count_error += 1
         transaction.failed_error = 'ERROR transfer_to_trade_balance failed'
         transaction.save()
         raise ExchangeTradeError('ERROR transfer_to_trade_balance failed')
-    start_exchange.apply_async(eta=now() + timedelta(seconds=5), kwargs=dict(transaction_pk=str(transaction.pk),
-                                                                             to_crypto=to_crypto))
+    start_exchange.apply_async(eta=now() + timedelta(seconds=15), kwargs=dict(transaction_pk=str(transaction.pk),
+                                                                              to_crypto=to_crypto))
 
     transaction.status_exchange = 'transfer_to_trade'
+    transaction.failed_error = ''
+    transaction.try_fixed_count_error = 0
     transaction.save()
     return f'transfer to trade balance {amount_exchange} {transaction.currency_exchange.name_from_white_bit} complete'
 
@@ -334,8 +348,9 @@ def start_trading(self, transaction_pk: str, to_crypto=None):
 @app.task
 def cleaner_unused_transactions():
     from exchanger.models import Transactions
-    from datetime import datetime, timedelta
-    transactions = Transactions.objects.filter(get_deposit=False, created_at__lte=datetime.now() - timedelta(days=1))
+    from datetime import timedelta
+    from django.utils.timezone import now
+    transactions = Transactions.objects.filter(get_deposit=False, created_at__lte=now() - timedelta(days=1))
     transactions.delete()
     return 'cleaner unused transactions complete'
 
@@ -343,8 +358,24 @@ def cleaner_unused_transactions():
 @app.task
 def check_failed_pending_transactions():
     from exchanger.models import Transactions
-    from datetime import datetime, timedelta
+    from datetime import timedelta
+    from django.utils.timezone import now
+
     transactions = Transactions.objects.filter(get_deposit=True,
-                                               status_time_update__lte=datetime.now() - timedelta(hours=1),
+                                               status_time_update__lte=now() - timedelta(hours=1),
                                                status='withdraw_pending')
     transactions.update(fail_pending=True)
+
+
+@app.task
+def check_failed_create_withdraw_transactions():
+    from exchanger.models import Transactions
+    from datetime import timedelta
+    from django.utils.timezone import now
+
+    transactions = Transactions.objects.filter(failed_error='not create_withdraw',
+                                               status_time_update__lte=now() - timedelta(hours=1),
+                                               ).all()
+    for transaction in transactions:
+        create_withdraw.apply_async(eta=now() + timedelta(seconds=5), kwargs=dict(transaction_pk=str(transaction.pk)))
+

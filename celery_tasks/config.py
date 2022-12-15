@@ -34,6 +34,9 @@ config = {
         'celery_tasks.tasks.check_failed_pending_transactions': {
             'queue': 'exchange'
         },
+        'celery_tasks.check_failed_create_withdraw_transactions': {
+            'queue': 'exchange'
+        },
 
     },
     'accept_content': ['json', 'application/x-python-serialize'],
