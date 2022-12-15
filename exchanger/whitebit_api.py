@@ -4,20 +4,23 @@ import hmac
 import json
 import time
 from decimal import Decimal
+import logging
 
 import requests
-# from django.conf import settings
+from django.conf import settings
+
 
 from exchanger.exchange_exceptions import ExchangeAmountMinMaxError
 from exchanger.exchange_exceptions import ExchangeTradeError
 
 
+logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+
+
 class WhiteBitAbstract:
     def __init__(self):
-        WHITEBIT_API_KEY = '3fa47a78c230a5afc425ea24fce73ac3'
-        WHITEBIT_SECRET_KEY = 'ca6a54c62aaba129c6d112888e166bdf'
-        self.api_key = WHITEBIT_API_KEY
-        self.secret_key = WHITEBIT_SECRET_KEY
+        self.api_key = settings.WHITEBIT_API_KEY
+        self.secret_key = settings.WHITEBIT_SECRET_KEY
         self.base_url = 'https://whitebit.com'
 
     def get_info_for_crypto(self, white_bit_currency_name: str, network: str) -> dict:
@@ -168,7 +171,9 @@ class WhiteBitApi(WhiteBitAbstract):
         data_json = self._get_data_json(data)
         headers = self._get_headers(data_json)
         response = requests.post(self.base_url + request_url, headers=headers, data=data_json)
-        print('-------try create_withdraw ---------')
+        logging.info('-------try create_withdraw ---------')
+        logging.info(data)
+        logging.info(response.json())
         print(data)
         print(response.json())
         if response.status_code == 201:
