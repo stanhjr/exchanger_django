@@ -207,7 +207,7 @@ class SendChangePasswordCodeView(UpdateAPIView):
         if serializer.is_valid():
             user = CustomUser.objects.filter(email=serializer.validated_data['email']).first()
             if not user:
-                return Response({'detail': 'not user'}, status=400)
+                return Response({'detail': 'not_user'}, status=400)
             user.reset_password_code = code
             user.save()
             send_reset_password_code_to_email.delay(email_to=serializer.validated_data.get("email"),

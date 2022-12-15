@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
-from rest_framework import serializers
+from rest_framework import serializers, validators
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from django.utils.translation import gettext_lazy as _
@@ -19,6 +19,15 @@ class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['password', 'email', 'inviter_token', 'username']
+
+    def __init__(self, *args, **kwargs):
+        super(SignUpSerializer, self).__init__(*args, **kwargs)
+        for validator in self.fields['email'].validators:
+            if isinstance(validator, validators.UniqueValidator):
+                validator.message = _('reg_email_exist_error')
+        for validator in self.fields['username'].validators:
+            if isinstance(validator, validators.UniqueValidator):
+                validator.message = _('reg_login_exist_error')
 
     def save(self, **kwargs):
         if len(self.validated_data["password"]) < 8:
@@ -51,6 +60,9 @@ class CustomTokenRefreshSerializer(TokenRefreshSerializer):
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    default_error_messages = {
+        'no_active_account': _('login_error_incorrect_data')
+    }
 
     def validate(self, attrs):
         username = attrs.get('username')
@@ -62,8 +74,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             )
         if not user.check_password(attrs.get('password')):
             raise AuthenticationFailed(
-                'not valid password or no_active_account',
-                'not valid password or no_active_account',
+                'login_error_incorrect_data',
+                'login_error_incorrect_data',
             )
         if user.two_factor_auth:
             code = generate_key()

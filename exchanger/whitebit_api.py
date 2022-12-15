@@ -285,8 +285,9 @@ class WhiteBitApi(WhiteBitAbstract):
             "nonce": self._nonce
         }
         result = self._get_response_dict(data=data, complete_url=self.base_url + request_url)
+        print("----trade balance----")
         for i, v in result.items():
-            if i == 'UAH' or i == 'USDT':
+            if i == 'UAH' or i == 'USDT' or i == 'ETH':
                 print(i, v)
 
     def get_main_balance(self):
@@ -296,8 +297,9 @@ class WhiteBitApi(WhiteBitAbstract):
             "nonce": self._nonce
         }
         result = self._get_response_dict(data=data, complete_url=self.base_url + request_url)
+        print("----main balance----")
         for i, v in result.items():
-            if i == 'UAH' or i == 'USDT':
+            if i == 'UAH' or i == 'USDT' or i == 'ETH':
                 print(i, v)
 
 
@@ -317,3 +319,19 @@ if __name__ == '__main__':
 # USDT {'available': '0.1385', 'freeze': '0'}
 # UAH {'main_balance': '27.1093'}
 # USDT {'main_balance': '10.9998'}
+
+
+# UAH {'available': '55.88975326', 'freeze': '0'}
+# USDT {'available': '0.1385', 'freeze': '0'}
+# UAH {'main_balance': '27.1093'}
+# USDT {'main_balance': '10.9998'
+
+
+# ----trade balance----
+# ETH {'available': '0.0000001', 'freeze': '0'}
+# UAH {'available': '59.06521817', 'freeze': '0'}
+# USDT {'available': '0.1353', 'freeze': '0'}
+# ----main balance----
+# ETH {'main_balance': '0.0102949'}
+# UAH {'main_balance': '27.10915738'}
+# USDT {'main_balance': '21.343'}
