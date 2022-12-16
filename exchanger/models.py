@@ -323,7 +323,7 @@ class Transactions(models.Model):
             print("amount_received", self.amount_received)
             print("sum", self.amount_received + commission_withdraw)
             amount_received = self.amount_received + commission_withdraw
-            if amount_received < self.currency_received.max_withdraw:
+            if amount_received < self.currency_received.min_withdraw:
                 return self.currency_received.max_withdraw
             return amount_received
         return self.amount_received
