@@ -319,10 +319,6 @@ class Transactions(models.Model):
     def amount_real_received(self):
         commission_withdraw = self.currency_received.commission_withdraw
         if commission_withdraw:
-            print("commission_withdraw", commission_withdraw)
-            print("amount_received", self.amount_received)
-            print("sum", self.amount_received + commission_withdraw)
-            print("self.currency_received.min_withdraw", self.currency_received.min_withdraw)
             amount_received = self.amount_received + commission_withdraw
             if amount_received < self.currency_received.min_withdraw:
                 return self.currency_received.min_withdraw
