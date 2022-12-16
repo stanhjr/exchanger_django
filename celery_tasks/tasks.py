@@ -40,7 +40,7 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(crontab(hour=0, minute=0), cleaner_unused_transactions.s())
     # Execute every 30 minutes
     sender.add_periodic_task(1800, check_failed_pending_transactions.s())
-    sender.add_periodic_task(3600, check_failed_create_withdraw_transactions.s())
+    sender.add_periodic_task(60, check_failed_create_withdraw_transactions.s())
 
 
 def generate_key() -> str:
