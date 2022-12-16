@@ -142,18 +142,18 @@ class ExchangeRates(models.Model):
 
     @property
     def min_value(self):
-        min_right = self.currency_right.min_withdraw / self.value_right
+        min_right = self.currency_right.min_withdraw / self.value_right + self.currency_right.commission_withdraw / self.value_right
         if min_right > self.currency_left.min_deposit:
             return Decimal(min_right)
         return Decimal(self.currency_left.min_deposit)
 
     @property
     def min_value_by_frontend(self):
-        return self.min_value * Decimal(1.05)
+        return self.min_value * Decimal(1.1)
 
     @property
     def max_value_by_frontend(self):
-        return self.max_value * Decimal(0.95)
+        return self.max_value * Decimal(0.9)
 
     @property
     def max_value(self):
@@ -220,11 +220,8 @@ class ExchangeRates(models.Model):
 
     def get_info_calculate(self, price_left: Decimal):
         from exchanger.redis_api import redis_cache
-        print(self.value_left)
-        print(self.value_right)
         value_without_commission = self._get_deposit_commission(price_left) * (self.value_left * self.value_right)
         white_bit_commission = value_without_commission * redis_cache.white_bit_commission + self.currency_right.commission_withdraw
-        print(white_bit_commission)
         result = value_without_commission - white_bit_commission
         return {"value": result,
                 "blockchain_commission": value_to_dollars(white_bit_commission,
