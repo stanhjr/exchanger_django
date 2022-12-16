@@ -25,7 +25,7 @@ class CommissionsAdmin(admin.ModelAdmin):
 
 @admin.register(Transactions)
 class TransactionsAdmin(admin.ModelAdmin):
-    readonly_fields = ("unique_id", "address", "hash",
+    readonly_fields = ("unique_id", "hash",
                        "email", "hash", "address_from", "fiat_unique_id",
                        "deposit_address", "created_at", "status_time_update")
     list_display = ("user", "email", "currency_exchange", "currency_received",
