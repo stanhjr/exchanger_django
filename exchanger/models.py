@@ -281,6 +281,8 @@ class Transactions(models.Model):
     email = models.EmailField(null=True)
     address_from = models.CharField(null=True, blank=True, max_length=200)
     address_to = models.CharField(null=True, blank=True, max_length=200)
+    commission_withdraw = models.DecimalField(validators=[MinValueValidator(0), ],
+                                              max_digits=25, decimal_places=15, null=True)
 
     class Meta:
         verbose_name = 'Транзакции'
@@ -320,7 +322,10 @@ class Transactions(models.Model):
             print("commission_withdraw", commission_withdraw)
             print("amount_received", self.amount_received)
             print("sum", self.amount_received + commission_withdraw)
-            return self.amount_received + commission_withdraw
+            amount_received = self.amount_received + commission_withdraw
+            if amount_received < self.currency_received.max_withdraw:
+                return self.currency_received.max_withdraw
+            return amount_received
         return self.amount_received
 
     @property

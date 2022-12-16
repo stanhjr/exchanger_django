@@ -104,6 +104,7 @@ class TransactionsCryptoToFiatView(generics.CreateAPIView):
                                        email=serializer.data.get("email"),
                                        address=serializer.data.get("address"),
                                        address_to=serializer.data.get("address"),
+                                       commission_withdraw=exchanger_pair.currency_right.commission_withdraw,
                                        )
 
             white_bit_api = WhiteBitApi()

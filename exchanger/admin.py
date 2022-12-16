@@ -27,7 +27,7 @@ class CommissionsAdmin(admin.ModelAdmin):
 class TransactionsAdmin(admin.ModelAdmin):
     readonly_fields = ("unique_id", "hash",
                        "email", "hash", "address_from", "fiat_unique_id",
-                       "deposit_address", "created_at", "status_time_update")
+                       "deposit_address", "created_at", "status_time_update", "commission_withdraw")
     list_display = ("user", "email", "currency_exchange", "currency_received",
                     "amount_exchange", "status", "failed", "fail_pending")
     list_filter = ("status", "failed")
