@@ -8,8 +8,6 @@ import logging
 
 import requests
 from django.conf import settings
-
-
 from exchanger.exchange_exceptions import ExchangeAmountMinMaxError
 from exchanger.exchange_exceptions import ExchangeTradeError
 
@@ -162,6 +160,7 @@ class WhiteBitApi(WhiteBitAbstract):
             "uniqueId": str(unique_id),
             "request": request_url,
             "nonce": self._nonce,
+            "PartialEnable": True,
             "nonceWindow": True
         }
         if network:
@@ -343,3 +342,7 @@ if __name__ == '__main__':
 # ETH {'main_balance': '0.0102949'}
 # UAH {'main_balance': '27.10915738'}
 # USDT {'main_balance': '21.343'}
+b = 0.0069 + 0.003297100000000
+main = 0.0102949
+print(b)
+print(main - b)

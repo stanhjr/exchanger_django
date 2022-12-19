@@ -374,7 +374,7 @@ def check_failed_create_withdraw_transactions():
     from django.utils.timezone import now
 
     transactions = Transactions.objects.filter(failed_error='not create_withdraw',
-                                               status_time_update__lte=now() - timedelta(minutes=60),
+                                               status_time_update__lte=now() - timedelta(minutes=1),
                                                ).all()
     for transaction in transactions:
         create_withdraw.apply_async(eta=now() + timedelta(seconds=5), kwargs=dict(transaction_pk=str(transaction.pk)))
