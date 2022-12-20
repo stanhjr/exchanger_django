@@ -160,7 +160,7 @@ class WhiteBitApi(WhiteBitAbstract):
             "uniqueId": str(unique_id),
             "request": request_url,
             "nonce": self._nonce,
-            "PartialEnable": True,
+            "partialEnable": True,
             "nonceWindow": True
         }
         if network:
