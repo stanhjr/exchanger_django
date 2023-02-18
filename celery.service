@@ -1,0 +1,8 @@
+[Unit]
+Description=celery tasks queue for send emails for new user of dms_bulk site reset passwords and other
+
+[Service]
+ExecStart=/home/exchanger_django/venv/bin/python /home/exchanger_django/run_celery.py
+
+[Install]
+WantedBy=multi-user.target
