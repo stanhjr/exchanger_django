@@ -1,12 +1,8 @@
 from django.db import migrations
 
-from exchanger.models import ProfitModel
-from exchanger.models import ProfitTotal
-
 
 def create_profit_total_default(*args, **kwargs):
-    ProfitTotal.objects.create(total_usdt=1,
-                               profit_percent=0.05)
+    ...
 
 
 
