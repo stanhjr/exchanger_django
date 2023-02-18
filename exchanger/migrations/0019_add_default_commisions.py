@@ -1,12 +1,8 @@
 from django.db import migrations
 
-from exchanger.models import Commissions
-
 
 def create_default_commissions(*args, **kwargs):
-    Commissions.objects.create(
-        white_bit_commission=0.01,
-    )
+    ...
 
 
 class Migration(migrations.Migration):
