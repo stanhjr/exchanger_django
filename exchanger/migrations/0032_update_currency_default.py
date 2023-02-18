@@ -7,8 +7,6 @@ from exchanger.models import Commissions
 
 
 def create_default_currency(*args, **kwargs):
-    Currency.objects.delete()
-
     Currency.objects.bulk_create([
         Currency(name='UAH (MONO / Privat / VISA /Mastercard)', network='VISAMASTER', name_from_white_bit='UAH',
                  fiat=True, network_for_min_max='VISAMASTER'),
